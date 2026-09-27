@@ -58,7 +58,15 @@ function heroHome(t: number) {
   const cx = title.left - r.left + title.width * (narrow ? 0.62 : 0.66), cy = title.top - r.top + title.height * (narrow ? 0.35 : 0.5);
   return { x: cx + Math.sin(t * 0.00023) * title.width * (narrow ? 0.18 : 0.26), y: cy + Math.sin(t * 0.00041) * title.height * 0.2 };
 }
+// The field costs real CPU per frame, so it only animates while the hero is on screen
+// and the tab is visible.
+let heroVisible = true;
+new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting; if (heroVisible) requestAnimationFrame(heroFrame); }).observe(hero);
+let heroLooping = false;
 function heroFrame(t: number) {
+  if (!heroVisible || document.hidden) { heroLooping = false; return; }
+  if (heroLooping && t === lastT) return;
+  heroLooping = true;
   const dt = Math.min(40, t - lastT); lastT = t;
   if (!dragging && t > userMoved) Object.assign(heroTarget, heroHome(t));
   // The big drop eases toward its heroTarget; the droplets chase orbit points on damped springs.
@@ -77,8 +85,9 @@ function heroFrame(t: number) {
     { x: big.x, y: big.y, w: rad * 2, h: rad * 2, r: rad },
     ...kids.map(k => ({ x: k.x, y: k.y, w: rad * 2 * k.s, h: rad * 2 * k.s, r: rad * k.s })),
   ]);
-  if (!still) requestAnimationFrame(heroFrame);
+  if (!still) requestAnimationFrame(heroFrame); else heroLooping = false;
 }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) requestAnimationFrame(heroFrame); });
 { const h0 = heroHome(0); Object.assign(big, h0); Object.assign(heroTarget, h0); kids.forEach(k => { k.x = h0.x; k.y = h0.y; }); }
 requestAnimationFrame(heroFrame);
 // An invisible dropHandle rides on the big drop. It carries touch-action: none from the start,
