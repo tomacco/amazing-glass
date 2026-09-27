@@ -92,8 +92,8 @@ h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
 .play-controls .note { font-size: 13px; color: var(--ink-3); margin: 4px 0 0; }
 
 /* 03: proof */
-.wipe { position: relative; aspect-ratio: 2 / 1; border-radius: 24px; overflow: hidden; user-select: none; touch-action: pan-y; --split: 50%; background: #000; }
-.wipe img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+.wipe { position: relative; aspect-ratio: 2 / 1; border-radius: 24px; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: pan-y; cursor: ew-resize; --split: 50%; background: #000; }
+.wipe img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; -webkit-user-drag: none; user-select: none; -webkit-user-select: none; }
 .wipe-apple { position: absolute; inset: 0; clip-path: inset(0 calc(100% - var(--split)) 0 0); }
 .wipe-handle { position: absolute; top: 0; bottom: 0; left: var(--split); width: 44px; margin-left: -22px; cursor: ew-resize; display: grid; place-items: center; outline: none; }
 .wipe-handle::before { content: ""; position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; box-shadow: 0 0 12px rgb(0 0 0 / 0.4); }
@@ -180,3 +180,6 @@ h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
   .marquee-row { font-size: 64px; }
   .lens-hint { display: none; }
 }
+
+/* Draggables: no text selection, no native image drag, no long-press callout. */
+.lens, .play-glass, .liquid-stage { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }

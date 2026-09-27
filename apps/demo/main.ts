@@ -58,6 +58,7 @@ function driftLens(t: number) {
 requestAnimationFrame(driftLens);
 if (still) placeLens(innerWidth * 0.6, innerHeight * 0.4);
 lensEl.addEventListener('pointerdown', e => {
+  e.preventDefault();
   lensEl.setPointerCapture(e.pointerId);
   const r = hero.getBoundingClientRect(), ox = e.clientX - r.left - px, oy = e.clientY - r.top - py;
   const move = (ev: PointerEvent) => { hold = performance.now() + 4000; placeLens(ev.clientX - r.left - ox, ev.clientY - r.top - oy); };
@@ -142,6 +143,7 @@ const bind = (id: string, key: 'depth' | 'bezel' | 'dispersion' | 'blur') =>
   });
 bind('#p-depth', 'depth'); bind('#p-bezel', 'bezel'); bind('#p-disp', 'dispersion'); bind('#p-blur', 'blur');
 playEl.addEventListener('pointerdown', e => {
+  e.preventDefault();
   playEl.setPointerCapture(e.pointerId);
   const r = playStage.getBoundingClientRect(), b = playEl.getBoundingClientRect();
   const ox = e.clientX - (b.left + b.width / 2), oy = e.clientY - (b.top + b.height / 2);
@@ -158,7 +160,9 @@ playEl.addEventListener('pointerdown', e => {
 /* ------------------------------------------------ Proof wipe */
 const wipe = $('#wipe'), handle = $('.wipe-handle', wipe);
 const setSplit = (f: number) => { const v = Math.min(100, Math.max(0, f)); wipe.style.setProperty('--split', `${v}%`); handle.setAttribute('aria-valuenow', String(Math.round(v))); };
+wipe.addEventListener('dragstart', e => e.preventDefault());
 wipe.addEventListener('pointerdown', e => {
+  e.preventDefault(); // no text selection or image drag while scrubbing
   const r = wipe.getBoundingClientRect();
   const at = (ev: PointerEvent) => setSplit(((ev.clientX - r.left) / r.width) * 100);
   at(e); wipe.setPointerCapture(e.pointerId);
