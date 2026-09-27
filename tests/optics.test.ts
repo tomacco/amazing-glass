@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { refractOffset, rimProfile, roundedRect, smoothMin, boxDistance } from '../src/core/optics';
+import { refractOffset, rimProfile, roundedRect, smoothMin, boxDistance, smoothFieldGrad } from '../src/core/optics';
 import { VARIANTS, resolveParams } from '../src/core/params';
 
 describe('refraction', () => {
@@ -49,6 +49,25 @@ describe('shapes', () => {
     const b = boxDistance(50, 0, { x: 100, y: 0, w: 60, h: 60, r: 30 });
     expect(smoothMin(a, b, 30)).toBeLessThan(Math.min(a, b));
     expect(smoothMin(a, a + 100, 30)).toBe(a);
+  });
+});
+
+describe('merged field gradient', () => {
+  test('analytic gradient matches finite differences, including inside the merge zone', () => {
+    const shapes = [{ x: 0, y: 0, w: 120, h: 120, r: 60 }, { x: 95, y: 20, w: 50, h: 50, r: 25 }, { x: -40, y: 70, w: 30, h: 30, r: 15 }];
+    const k = 40, e = 1e-3;
+    for (const [px, py] of [[62, 8], [70, -20], [-30, 55], [30, 30], [120, 60], [0, -70]]) {
+      const f = smoothFieldGrad(px, py, shapes, k);
+      const fx = (smoothFieldGrad(px + e, py, shapes, k).d - smoothFieldGrad(px - e, py, shapes, k).d) / (2 * e);
+      const fy = (smoothFieldGrad(px, py + e, shapes, k).d - smoothFieldGrad(px, py - e, shapes, k).d) / (2 * e);
+      expect(f.gx).toBeCloseTo(fx, 4);
+      expect(f.gy).toBeCloseTo(fy, 4);
+    }
+  });
+  test('value matches the plain smooth minimum', () => {
+    const shapes = [{ x: 0, y: 0, w: 80, h: 80, r: 40 }, { x: 70, y: 0, w: 40, h: 40, r: 20 }];
+    const f = smoothFieldGrad(45, 3, shapes, 30);
+    expect(f.d).toBeCloseTo(smoothMin(smoothMin(1e9, boxDistance(45, 3, shapes[0]), 30), boxDistance(45, 3, shapes[1]), 30), 9);
   });
 });
 

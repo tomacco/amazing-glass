@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><title>GlassField benchmark</title>
+<link rel="stylesheet" href="../dist/amazing-glass.css">
+<!-- Times GlassField frames for the demo hero's scene: one big drop, three droplets that
+     sweep from merged to separate. Open with ?draft=0 for full quality. Result in window.result. -->
+<div style="position:relative;width:1440px;height:900px;background:linear-gradient(90deg,#123,#456)"><div id="d"></div></div>
+<script type="module">
+import { GlassField } from '../dist/core.js';
+const field = new GlassField(document.getElementById('d'), { merge: 46, fit: true, margin: 56, params: { blur: 0 } });
+const R = 130;
+const scene = t => [
+  { x: 700, y: 450, w: 2 * R, h: 2 * R, r: R },
+  ...[0.34, 0.26, 0.2].map((s, i) => {
+    const a = t * 0.7 + i * 2.1, reach = R * (1.1 + 1.25 * (0.5 + 0.5 * Math.sin(t + i)));
+    return { x: 700 + Math.cos(a) * reach, y: 450 + Math.sin(a) * reach * 0.8, w: 2 * R * s, h: 2 * R * s, r: R * s };
+  }),
+];
+window.run = (draft) => {
+  field.shapes = scene(0); field.render(draft);           // warm up
+  const times = [], regionMs = [], regions = [];
+  for (let i = 0; i < 40; i++) {
+    field.shapes = scene(i * 0.16);
+    const t0 = performance.now(); field.render(draft); times.push(performance.now() - t0);
+    if (field.lastFrame) { regionMs.push(field.lastFrame.regionMs); regions.push(field.lastFrame.regions); }
+  }
+  const avg = a => a.length ? +(a.reduce((x, y) => x + y, 0) / a.length).toFixed(2) : undefined;
+  times.sort((a, b) => a - b);
+  const mean = times.reduce((a, b) => a + b, 0) / times.length;
+  return { draft, meanMs: +mean.toFixed(2), medianMs: +times[20].toFixed(2), maxMs: +times[39].toFixed(2), neckMs: avg(regionMs), necks: avg(regions), box: document.getElementById('d').style.width + ' x ' + document.getElementById('d').style.height };
+};
+window.ready = true;
+</script>

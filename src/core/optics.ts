@@ -38,6 +38,36 @@ export function boxDistance(px: number, py: number, s: Box): number {
   return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - s.r;
 }
 
+/** Distance to a rounded box and its exact gradient (the outward normal where it exists). */
+export function boxDistanceGrad(px: number, py: number, s: Box): { d: number; gx: number; gy: number } {
+  const dx = px - s.x, dy = py - s.y, sx = dx < 0 ? -1 : 1, sy = dy < 0 ? -1 : 1;
+  const qx = Math.abs(dx) - (s.w / 2 - s.r), qy = Math.abs(dy) - (s.h / 2 - s.r);
+  if (qx > 0 && qy > 0) {
+    const len = Math.hypot(qx, qy);
+    return { d: len - s.r, gx: (sx * qx) / len, gy: (sy * qy) / len };
+  }
+  return qx > qy ? { d: qx - s.r, gx: sx, gy: 0 } : { d: qy - s.r, gx: 0, gy: sy };
+}
+
+/**
+ * Smooth minimum of several boxes with its exact gradient. For smin(a, b) with
+ * h = max(k - |a - b|, 0) / k, the partial derivatives are 1 - h/2 for the smaller input and
+ * h/2 for the larger, so the gradient is carried through the fold at no extra evaluations.
+ */
+export function smoothFieldGrad(px: number, py: number, shapes: Box[], k: number): { d: number; gx: number; gy: number } {
+  let d = 1e9, gx = 0, gy = 0;
+  for (const s of shapes) {
+    const b = boxDistanceGrad(px, py, s);
+    const diff = Math.abs(d - b.d);
+    if (diff >= k) { if (b.d < d) { d = b.d; gx = b.gx; gy = b.gy; } continue; }
+    const h = (k - diff) / k, small = d < b.d;
+    const wa = small ? 1 - h / 2 : h / 2, wb = 1 - wa;
+    d = Math.min(d, b.d) - h * h * k * 0.25;
+    gx = gx * wa + b.gx * wb; gy = gy * wa + b.gy * wb;
+  }
+  return { d, gx, gy };
+}
+
 /** Polynomial smooth minimum: blends two distances so shapes melt together within k px. */
 export function smoothMin(a: number, b: number, k: number): number {
   const h = Math.max(k - Math.abs(a - b), 0) / k;

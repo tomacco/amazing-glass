@@ -21,6 +21,22 @@ export interface Box {
     r: number;
 }
 export declare function boxDistance(px: number, py: number, s: Box): number;
+/** Distance to a rounded box and its exact gradient (the outward normal where it exists). */
+export declare function boxDistanceGrad(px: number, py: number, s: Box): {
+    d: number;
+    gx: number;
+    gy: number;
+};
+/**
+ * Smooth minimum of several boxes with its exact gradient. For smin(a, b) with
+ * h = max(k - |a - b|, 0) / k, the partial derivatives are 1 - h/2 for the smaller input and
+ * h/2 for the larger, so the gradient is carried through the fold at no extra evaluations.
+ */
+export declare function smoothFieldGrad(px: number, py: number, shapes: Box[], k: number): {
+    d: number;
+    gx: number;
+    gy: number;
+};
 /** Polynomial smooth minimum: blends two distances so shapes melt together within k px. */
 export declare function smoothMin(a: number, b: number, k: number): number;
 /**

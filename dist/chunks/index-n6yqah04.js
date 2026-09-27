@@ -66,57 +66,31 @@ function rimProfile2(bezelPx, thickness, ior, samples = 64) {
 var bezelWidth = (w, h, bezel, maxBezel) => Math.max(4, Math.min(maxBezel, Math.min(w, h) * bezel));
 
 // src/core/maps.ts
-function canvas(w, h) {
-  const c = document.createElement("canvas");
-  c.width = w;
-  c.height = h;
-  const ctx = c.getContext("2d");
-  return { c, ctx, img: ctx.createImageData(w, h) };
-}
-function drawMaps(id, w, h, sample, p, bezelPx, opts = {}) {
-  const thickness = bezelPx * p.depth;
-  const profile = rimProfile2(bezelPx, thickness, p.ior);
+function displacementScale(w, h, p, bezelPx) {
+  const profile = rimProfile2(bezelPx, bezelPx * p.depth, p.ior);
   const zoom = p.zoom || 1;
-  const zoomMax = (1 - 1 / zoom) * Math.max(w, h) / 2;
-  const scale = Math.max(1, (profile.max + zoomMax) * 2.1);
-  const q = opts.draft ? 0.5 : 1;
-  const dw = Math.max(1, Math.ceil(w * q)), dh = Math.max(1, Math.ceil(h * q));
-  const D = canvas(dw, dh), dd = D.img.data;
-  const dx = new Float32Array(dw * dh), dy = new Float32Array(dw * dh);
-  for (let y = 0;y < dh; y++) {
-    for (let x = 0;x < dw; x++) {
-      const px = (x + 0.5) / q, py = (y + 0.5) / q;
-      const { d, nx, ny } = sample(px, py);
+  return Math.max(1, (profile.max + (1 - 1 / zoom) * Math.max(w, h) / 2) * 2.1);
+}
+function shaders(p, bezelPx, scale, w, h) {
+  const profile = rimProfile2(bezelPx, bezelPx * p.depth, p.ior);
+  const zoom = p.zoom || 1;
+  const la = p.light * Math.PI / 180, lx = Math.cos(la), ly = Math.sin(la);
+  return {
+    displacement(d, nx, ny, px, py, sprite = false) {
       const off = profile.at(-d);
       let ox = -nx * off, oy = -ny * off;
       if (zoom !== 1 && d < 0) {
         ox -= (px - w / 2) * (1 - 1 / zoom);
         oy -= (py - h / 2) * (1 - 1 / zoom);
       }
-      const i = y * dw + x, k = i * 4;
-      dx[i] = ox;
-      dy[i] = oy;
-      dd[k] = 128 + ox / scale * 255;
-      dd[k + 1] = 128 + oy / scale * 255;
-      dd[k + 2] = 128;
-      dd[k + 3] = 255;
-    }
-  }
-  D.ctx.putImageData(D.img, 0, 0);
-  const dpr = opts.draft ? 1 : Math.min(2, globalThis.devicePixelRatio || 1);
-  const sw = Math.ceil(w * dpr), sh = Math.ceil(h * dpr);
-  const S = canvas(sw, sh), sd = S.img.data;
-  const M = opts.mask ? canvas(sw, sh) : null;
-  const la = p.light * Math.PI / 180, lx = Math.cos(la), ly = Math.sin(la);
-  const rim = p.rimWidth * dpr, glow = bezelPx * 0.55 * dpr;
-  for (let y = 0;y < sh; y++) {
-    for (let x = 0;x < sw; x++) {
-      const { d, nx, ny } = sample((x + 0.5) / dpr, (y + 0.5) / dpr);
-      const depth = -d * dpr, k = (y * sw + x) * 4;
-      if (M)
-        M.img.data[k + 3] = Math.min(1, Math.max(0, depth + 0.5)) * 255;
+      const r = clamp255(128 + ox / scale * 255), g = clamp255(128 + oy / scale * 255);
+      return ((sprite && d > 0.5 ? 0 : 255) << 24 | 128 << 16 | g << 8 | r) >>> 0;
+    },
+    specular(d, nx, ny, dpr) {
+      const depth = -d * dpr;
       if (depth <= -1)
-        continue;
+        return 0;
+      const rim = p.rimWidth * dpr, glow = bezelPx * 0.55 * dpr;
       const facing = nx * lx + ny * ly;
       const lit = Math.pow(Math.max(0, facing), 1.6);
       const back = Math.pow(Math.max(0, -facing), 2.2) * 0.55;
@@ -126,19 +100,62 @@ function drawMaps(id, w, h, sample, p, bezelPx, opts = {}) {
       const a = Math.min(1, (line + soft) * aa * p.rim);
       const shade = Math.exp(-Math.pow((depth - rim * 1.6) / (rim * 0.9), 2)) * p.shade * aa * (1 - lit);
       const v = shade > a ? 0 : 255;
-      sd[k] = sd[k + 1] = sd[k + 2] = v;
-      sd[k + 3] = Math.max(a, shade) * 255;
+      return (clamp255(Math.max(a, shade) * 255) << 24 | v << 16 | v << 8 | v) >>> 0;
+    },
+    mask(d, dpr) {
+      return clamp255(Math.min(1, Math.max(0, -d * dpr + 0.5)) * 255) << 24 >>> 0;
     }
+  };
+}
+var clamp255 = (v) => v <= 0 ? 0 : v >= 255 ? 255 : Math.round(v);
+function computeMaps(w, h, sample, p, bezelPx, opts = {}) {
+  const scale = opts.scale ?? displacementScale(w, h, p, bezelPx);
+  const sh = shaders(p, bezelPx, scale, w, h);
+  const q = opts.q ?? (opts.draft ? 0.5 : 1);
+  const dw = Math.max(1, Math.ceil(w * q)), dh = Math.max(1, Math.ceil(h * q));
+  const D = new ImageData(dw, dh), d32 = new Uint32Array(D.data.buffer);
+  for (let y = 0;y < dh; y++)
+    for (let x = 0;x < dw; x++) {
+      const px = (x + 0.5) / q, py = (y + 0.5) / q;
+      const s = sample(px, py);
+      d32[y * dw + x] = sh.displacement(s.d, s.nx, s.ny, px, py, opts.sprite);
+    }
+  const dpr = opts.dpr ?? (opts.draft ? 1 : Math.min(2, globalThis.devicePixelRatio || 1));
+  const sw = Math.ceil(w * dpr), shh = Math.ceil(h * dpr);
+  const S = new ImageData(sw, shh), s32 = new Uint32Array(S.data.buffer);
+  const M = opts.mask ? new ImageData(sw, shh) : undefined, m32 = M && new Uint32Array(M.data.buffer);
+  for (let y = 0;y < shh; y++)
+    for (let x = 0;x < sw; x++) {
+      const s = sample((x + 0.5) / dpr, (y + 0.5) / dpr), i = y * sw + x;
+      s32[i] = sh.specular(s.d, s.nx, s.ny, dpr);
+      if (m32)
+        m32[i] = sh.mask(s.d, dpr);
+    }
+  return { displacement: D, specular: S, mask: M, q, dpr, scale };
+}
+function rawOffsets(id, img, q, scale) {
+  const n = img.width * img.height, dx = new Float32Array(n), dy = new Float32Array(n), d = img.data;
+  for (let i = 0;i < n; i++) {
+    dx[i] = (d[i * 4] - 128) / 255 * scale;
+    dy[i] = (d[i * 4 + 1] - 128) / 255 * scale;
   }
-  S.ctx.putImageData(S.img, 0, 0);
-  if (M)
-    M.ctx.putImageData(M.img, 0, 0);
+  return { id, width: img.width, height: img.height, q, dx, dy };
+}
+function pngUrl(img) {
+  const c = document.createElement("canvas");
+  c.width = img.width;
+  c.height = img.height;
+  c.getContext("2d").putImageData(img, 0, 0);
+  return c.toDataURL();
+}
+function drawMaps(id, w, h, sample, p, bezelPx, opts = {}) {
+  const m = computeMaps(w, h, sample, p, bezelPx, opts);
   return {
-    displacement: D.c.toDataURL(),
-    specular: S.c.toDataURL(),
-    mask: M?.c.toDataURL(),
-    scale,
-    raw: { id, width: dw, height: dh, q, dx, dy }
+    displacement: pngUrl(m.displacement),
+    specular: pngUrl(m.specular),
+    mask: m.mask && pngUrl(m.mask),
+    scale: m.scale,
+    raw: rawOffsets(id, m.displacement, m.q, m.scale)
   };
 }
 var cache = new Map;
@@ -552,6 +569,8 @@ class GlassField2 {
   margin;
   lastSet = 0;
   settle = 0;
+  sprites = new Map;
+  lastFrame = { ms: 0, regionMs: 0, regions: 0 };
   constructor(el, opts = {}) {
     this.el = el;
     this.params = resolveParams2(opts.variant ?? "clear", opts.params);
@@ -582,66 +601,245 @@ class GlassField2 {
   }
   setParams(params) {
     this.params = { ...this.params, ...params };
+    this.sprites.clear();
     this.setShapes(this.shapes);
+  }
+  sprite(s, bezel, scale, draft) {
+    const key = [s.w, s.h, s.r, bezel, scale, draft].join("|");
+    let m = this.sprites.get(key);
+    if (!m) {
+      const pad = 2, w = s.w + pad * 2, h = s.h + pad * 2;
+      const one = { x: w / 2, y: h / 2, w: s.w, h: s.h, r: s.r };
+      m = computeMaps(w, h, sampler([one], 0), { ...this.params, zoom: 1 }, bezel, { mask: true, sprite: true, scale, q: 1, dpr: fieldDpr(draft) });
+      if (this.sprites.size > 64)
+        this.sprites.clear();
+      this.sprites.set(key, m);
+    }
+    return m;
   }
   render(draft = false) {
     if (!this.shapes.length)
       return;
-    let shapes = this.shapes;
+    const t0 = performance.now();
+    const even = (v) => Math.max(2, 2 * Math.round(v / 2));
+    let shapes = this.shapes.map((s) => ({ ...s, x: Math.round(s.x), y: Math.round(s.y), w: even(s.w), h: even(s.h) }));
+    let box;
     if (this.fit) {
-      const m = this.margin;
-      const x0 = Math.floor(Math.min(...shapes.map((s) => s.x - s.w / 2)) - m), y0 = Math.floor(Math.min(...shapes.map((s) => s.y - s.h / 2)) - m);
-      const x1 = Math.ceil(Math.max(...shapes.map((s) => s.x + s.w / 2)) + m), y1 = Math.ceil(Math.max(...shapes.map((s) => s.y + s.h / 2)) + m);
-      Object.assign(this.el.style, { transform: `translate(${x0}px, ${y0}px)`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
+      const m = Math.ceil(this.margin);
+      const x0 = Math.min(...shapes.map((s) => s.x - Math.ceil(s.w / 2))) - m, y0 = Math.min(...shapes.map((s) => s.y - Math.ceil(s.h / 2))) - m;
+      const x1 = Math.max(...shapes.map((s) => s.x + Math.ceil(s.w / 2))) + m, y1 = Math.max(...shapes.map((s) => s.y + Math.ceil(s.h / 2))) + m;
+      box = { transform: `translate(${x0}px, ${y0}px)`, width: `${x1 - x0}px`, height: `${y1 - y0}px` };
       shapes = shapes.map((s) => ({ ...s, x: s.x - x0, y: s.y - y0 }));
     }
-    const w = this.el.offsetWidth, h = this.el.offsetHeight;
+    const w = box ? parseInt(box.width) : this.el.offsetWidth, h = box ? parseInt(box.height) : this.el.offsetHeight;
     if (!w || !h)
       return;
-    const p = this.params, k = this.merge;
+    const p = { ...this.params, zoom: 1 }, k = this.merge;
     const minSide = Math.min(...shapes.map((s) => Math.min(s.w, s.h)));
     const bezel = bezelWidth(minSide, minSide, p.bezel, p.maxBezel);
-    const g = draft ? 0.5 : 1;
-    const gw = Math.max(2, Math.ceil(w * g)), gh = Math.max(2, Math.ceil(h * g));
-    const sdf = new Float32Array(gw * gh);
-    for (let y = 0;y < gh; y++)
-      for (let x = 0;x < gw; x++) {
-        let d = 1e9;
-        for (const s of shapes)
-          d = smoothMin2(d, boxDistance((x + 0.5) / g, (y + 0.5) / g, s), k);
-        sdf[y * gw + x] = d;
+    const scale = displacementScale(minSide, minSide, p, bezel);
+    const q = 1, dpr = fieldDpr(draft);
+    const D = new ImageData(Math.ceil(w * q), Math.ceil(h * q)), S = new ImageData(Math.ceil(w * dpr), Math.ceil(h * dpr)), M = new ImageData(S.width, S.height);
+    new Uint32Array(D.data.buffer).fill(4286611584);
+    for (const s of shapes) {
+      const sp = this.sprite(s, bezel, scale, draft), pad = 2;
+      const ox = s.x - s.w / 2 - pad, oy = s.y - s.h / 2 - pad;
+      stamp(D, sp.displacement, Math.round(ox * q), Math.round(oy * q), "opaque");
+      stamp(S, sp.specular, Math.round(ox * dpr), Math.round(oy * dpr), "max");
+      stamp(M, sp.mask, Math.round(ox * dpr), Math.round(oy * dpr), "max");
+    }
+    const r0 = performance.now();
+    const grow = Math.ceil(k * 1.25 + 4);
+    const sh = shaders(p, bezel, scale, w, h);
+    const d32 = new Uint32Array(D.data.buffer), s32 = new Uint32Array(S.data.buffer), m32 = new Uint32Array(M.data.buffer);
+    const deep = -2.5 * bezel;
+    const marks = new Uint8Array(w * h);
+    let regions = 0;
+    for (let i = 0;i < shapes.length; i++)
+      for (let j = i + 1;j < shapes.length; j++) {
+        const a = shapes[i], b = shapes[j];
+        const gx = Math.max(0, Math.abs(a.x - b.x) - (a.w + b.w) / 2), gy = Math.max(0, Math.abs(a.y - b.y) - (a.h + b.h) / 2);
+        if (Math.hypot(gx, gy) >= k)
+          continue;
+        const x0 = Math.max(0, Math.floor(Math.max(a.x - a.w / 2, b.x - b.w / 2) - grow)), x1 = Math.min(w, Math.ceil(Math.min(a.x + a.w / 2, b.x + b.w / 2) + grow));
+        const y0 = Math.max(0, Math.floor(Math.max(a.y - a.h / 2, b.y - b.h / 2) - grow)), y1 = Math.min(h, Math.ceil(Math.min(a.y + a.h / 2, b.y + b.h / 2) + grow));
+        if (x1 - x0 < 2 || y1 - y0 < 2)
+          continue;
+        for (let y = y0;y < y1; y++)
+          marks.fill(1, y * w + x0, y * w + x1);
+        regions++;
       }
-    const at = (x, y) => sdf[Math.min(gh - 1, Math.max(0, y)) * gw + Math.min(gw - 1, Math.max(0, x))];
-    const sample = (px, py) => {
-      const fx = px * g - 0.5, fy = py * g - 0.5, x = Math.floor(fx), y = Math.floor(fy), tx = fx - x, ty = fy - y;
-      const d = (at(x, y) * (1 - tx) + at(x + 1, y) * tx) * (1 - ty) + (at(x, y + 1) * (1 - tx) + at(x + 1, y + 1) * tx) * ty;
-      const gx = at(x + 1, y) - at(x - 1, y), gy = at(x, y + 1) - at(x, y - 1);
-      const gl = Math.hypot(gx, gy) || 1;
-      return { d, nx: gx / gl, ny: gy / gl };
+    const n = shapes.length, dd = new Float64Array(n), gxs = new Float64Array(n), gys = new Float64Array(n);
+    const out = { d: 0, nx: 0, ny: 0 };
+    const fold = (px, py, grad) => {
+      let m1 = 1e9, m2 = 1e9;
+      for (let i = 0;i < n; i++) {
+        const sp = shapes[i], dx = px - sp.x, dy = py - sp.y, sx = dx < 0 ? -1 : 1, sy = dy < 0 ? -1 : 1;
+        const qx = Math.abs(dx) - (sp.w / 2 - sp.r), qy = Math.abs(dy) - (sp.h / 2 - sp.r);
+        let dist;
+        if (qx > 0 && qy > 0) {
+          const len = Math.sqrt(qx * qx + qy * qy);
+          dist = len - sp.r;
+          gxs[i] = sx * qx / len;
+          gys[i] = sy * qy / len;
+        } else if (qx > qy) {
+          dist = qx - sp.r;
+          gxs[i] = sx;
+          gys[i] = 0;
+        } else {
+          dist = qy - sp.r;
+          gxs[i] = 0;
+          gys[i] = sy;
+        }
+        dd[i] = dist;
+        if (dist < m1) {
+          m2 = m1;
+          m1 = dist;
+        } else if (dist < m2)
+          m2 = dist;
+      }
+      if (m2 - m1 >= k || m1 > k + 1.5)
+        return false;
+      let d = 1e9, gx = 0, gy = 0;
+      for (let i = 0;i < n; i++) {
+        const diff = Math.abs(d - dd[i]);
+        if (diff >= k) {
+          if (dd[i] < d) {
+            d = dd[i];
+            gx = gxs[i];
+            gy = gys[i];
+          }
+          continue;
+        }
+        const hh = (k - diff) / k, wa = d < dd[i] ? 1 - hh / 2 : hh / 2;
+        d = Math.min(d, dd[i]) - hh * hh * k * 0.25;
+        if (grad) {
+          gx = gx * wa + gxs[i] * (1 - wa);
+          gy = gy * wa + gys[i] * (1 - wa);
+        }
+      }
+      if (d > 1.5 || d < deep)
+        return false;
+      const gl = Math.sqrt(gx * gx + gy * gy) || 1;
+      out.d = d;
+      out.nx = gx / gl;
+      out.ny = gy / gl;
+      return true;
     };
-    const maps = drawMaps(this.id + performance.now(), w, h, sample, { ...p, zoom: 1 }, bezel, { mask: true, draft });
-    const mask = `url(${maps.mask})`;
+    if (regions) {
+      const step = draft ? 2 : 1, same = dpr === q;
+      for (let y = 0;y < h; y += step)
+        for (let x = 0;x < w; x += step) {
+          if (!marks[y * w + x])
+            continue;
+          const cx = x + step / 2, cy = y + step / 2;
+          if (!fold(cx, cy, true))
+            continue;
+          const s = out;
+          const disp = sh.displacement(s.d, s.nx, s.ny, cx, cy), spec = sh.specular(s.d, s.nx, s.ny, dpr);
+          for (let yy = y;yy < Math.min(h, y + step); yy++)
+            for (let xx = x;xx < Math.min(w, x + step); xx++) {
+              d32[yy * D.width + xx] = disp;
+              if (same)
+                s32[yy * S.width + xx] = spec;
+            }
+        }
+      if (same) {
+        for (let y = 0;y < h; y++)
+          for (let x = 0;x < w; x++) {
+            if (!marks[y * w + x])
+              continue;
+            if (fold(x + 0.5, y + 0.5, false))
+              m32[y * S.width + x] = sh.mask(out.d, dpr);
+          }
+      } else
+        for (let y = 0;y < S.height; y++)
+          for (let x = 0;x < S.width; x++) {
+            if (!marks[Math.min(h - 1, Math.floor(y / dpr)) * w + Math.min(w - 1, Math.floor(x / dpr))])
+              continue;
+            if (!fold((x + 0.5) / dpr, (y + 0.5) / dpr, true))
+              continue;
+            const s = out, i = y * S.width + x;
+            s32[i] = sh.specular(s.d, s.nx, s.ny, dpr);
+            m32[i] = sh.mask(s.d, dpr);
+          }
+    }
+    const regionMs = performance.now() - r0;
+    const Dout = draft ? halve(D) : D;
+    this.present({ disp: pngUrl(Dout), spec: pngUrl(S), mask: pngUrl(M), w, h, scale, p, Dout, q: Dout.width / w, t0, box });
+    this.lastFrame = { ms: performance.now() - t0, regionMs, regions };
+  }
+  present(f) {
+    if (f.box)
+      Object.assign(this.el.style, f.box);
     const ls = this.layer.style;
-    ls.maskImage = ls.webkitMaskImage = mask;
+    ls.maskImage = ls.webkitMaskImage = `url(${f.mask})`;
     ls.maskSize = ls.webkitMaskSize = "100% 100%";
-    ls.backgroundImage = `url(${maps.specular})`;
+    ls.backgroundImage = `url(${f.spec})`;
     if (supportsRefraction2) {
       this.filter ??= createFilter(this.id);
-      updateFilter(this.filter, w, h, maps.displacement, maps.scale, p);
+      updateFilter(this.filter, f.w, f.h, f.disp, f.scale, f.p);
       ls.backdropFilter = `url(#${this.id})`;
     } else {
-      ls.backdropFilter = cssBackdrop(p);
-      ls.setProperty("-webkit-backdrop-filter", cssBackdrop(p));
+      ls.backdropFilter = cssBackdrop(f.p);
+      ls.setProperty("-webkit-backdrop-filter", cssBackdrop(f.p));
       this.cpu ??= new CpuRefraction(this.el);
-      this.cpu.render(maps.raw, w, h, p.dispersion, maps.mask);
+      this.cpu.render(rawOffsets(this.id + f.t0, f.Dout, f.q, f.scale), f.w, f.h, f.p.dispersion, f.mask);
     }
+    this.presented++;
   }
+  presented = 0;
   destroy() {
     cancelAnimationFrame(this.frame);
+    clearTimeout(this.settle);
     this.filter?.remove();
     this.cpu?.destroy();
     this.layer.remove();
     this.el.classList.remove("ag-glass", "ag-field");
+  }
+}
+var fieldDpr = (draft) => draft ? 1 : Math.min(2, globalThis.devicePixelRatio || 1);
+function sampler(shapes, k, bezel = 0) {
+  const field = (x, y) => {
+    let d = 1e9;
+    for (const s of shapes)
+      d = k > 0 ? smoothMin2(d, boxDistance(x, y, s), k) : Math.min(d, boxDistance(x, y, s));
+    return d;
+  };
+  const deep = -2.5 * bezel;
+  return (px, py) => {
+    const d = field(px, py);
+    if (bezel && (d > 1.5 || d < deep))
+      return { d, nx: 0, ny: 0 };
+    const gx = field(px + 0.5, py) - field(px - 0.5, py), gy = field(px, py + 0.5) - field(px, py - 0.5);
+    const gl = Math.hypot(gx, gy) || 1;
+    return { d, nx: gx / gl, ny: gy / gl };
+  };
+}
+function halve(src) {
+  const w = Math.ceil(src.width / 2), h = Math.ceil(src.height / 2), out = new ImageData(w, h);
+  const s32 = new Uint32Array(src.data.buffer), o32 = new Uint32Array(out.data.buffer);
+  for (let y = 0;y < h; y++)
+    for (let x = 0;x < w; x++)
+      o32[y * w + x] = s32[Math.min(src.height - 1, y * 2) * src.width + Math.min(src.width - 1, x * 2)];
+  return out;
+}
+function stamp(dst, src, x, y, mode) {
+  const d32 = new Uint32Array(dst.data.buffer), s32 = new Uint32Array(src.data.buffer);
+  const x0 = Math.max(0, x), y0 = Math.max(0, y), x1 = Math.min(dst.width, x + src.width), y1 = Math.min(dst.height, y + src.height);
+  for (let yy = y0;yy < y1; yy++) {
+    let di = yy * dst.width + x0, si = (yy - y) * src.width + (x0 - x);
+    if (mode === "copy") {
+      d32.set(s32.subarray(si, si + (x1 - x0)), di);
+      continue;
+    }
+    for (let xx = x0;xx < x1; xx++, di++, si++) {
+      const sp = s32[si], sa = sp >>> 24;
+      if (!sa)
+        continue;
+      if (mode === "opaque" || sa > d32[di] >>> 24)
+        d32[di] = sp;
+    }
   }
 }
 // src/core/index.ts
