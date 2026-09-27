@@ -11,14 +11,21 @@ import {
   luminanceAt2,
   refresh2,
   Glass2,
+  webgl2Available2,
   GlassField2,
+  LEVELS2,
+  FEATURES2,
+  featureStatus2,
   glass2
-} from "./chunks/index-n6yqah04.js";
+} from "./chunks/index-z0bgpr8b.js";
 export {
+  FEATURES2 as FEATURES,
   Glass2 as Glass,
   GlassField2 as GlassField,
+  LEVELS2 as LEVELS,
   VARIANTS2 as VARIANTS,
   backdropChanged2 as backdropChanged,
+  featureStatus2 as featureStatus,
   glass2 as glass,
   luminanceAt2 as luminanceAt,
   refractOffset2 as refractOffset,
@@ -28,5 +35,6 @@ export {
   rimProfile2 as rimProfile,
   roundedRect2 as roundedRect,
   smoothMin2 as smoothMin,
-  supportsRefraction2 as supportsRefraction
+  supportsRefraction2 as supportsRefraction,
+  webgl2Available2 as webgl2Available
 };

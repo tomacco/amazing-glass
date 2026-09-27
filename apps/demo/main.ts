@@ -43,10 +43,44 @@ blobs($('.control-bg'), ['#ff5e62', '#ff9966', '#5b8cff', '#a855f7', '#22d3ee', 
 // One big drop you can drag, and three droplets on springs that orbit it, drift off and melt
 // back in. They are shapes in one GlassField, so wherever they touch they share one surface.
 const hero = $('.hero'), dropsEl = $('#drops');
+// Experimental GPU renderer: it bends what is in a canvas, so the hero paints a stage canvas
+// each frame with the colour field and the headline. Without WebGL2 the field falls back to
+// the SVG path over the live page, and the stage is removed.
+const heroBg = $<HTMLCanvasElement>('.hero-bg');
+const stage = document.createElement('canvas');
+stage.className = 'hero-stage';
+stage.setAttribute('aria-hidden', 'true');
+heroBg.after(stage);
 const drops = new GlassField(dropsEl, {
+  renderer: new URLSearchParams(location.search).has('svg') ? 'svg' : 'webgl', backdrop: stage,
   merge: 46, fit: true, margin: 56,
   params: { blur: 0, saturate: 1.25, lum: 1, contrast: 1, bezel: 0.42, maxBezel: 44, depth: 1.2, dispersion: 0.035, rim: 1.35, rimWidth: 1.1, shade: 0.12 },
 });
+const gpu = drops.renderer === 'webgl';
+hero.classList.toggle('gpu', gpu);
+if (!gpu) stage.remove();
+$('#renderer').textContent = gpu ? 'WebGL2 renderer · experimental' : 'SVG filter renderer · stable';
+function paintStage() {
+  const dpr = Math.min(2, devicePixelRatio || 1), r = hero.getBoundingClientRect();
+  const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (stage.width !== w || stage.height !== h) { stage.width = w; stage.height = h; }
+  const ctx = stage.getContext('2d')!;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(heroBg, 0, 0, w, h);
+  ctx.setTransform(dpr, 0, 0, dpr, -r.left * dpr, -r.top * dpr);
+  // The headline, drawn where the page laid it out, so the glass can bend it.
+  for (const span of $$('.hero-title span')) {
+    const cs = getComputedStyle(span), b = span.getBoundingClientRect();
+    ctx.globalAlpha = +cs.opacity;
+    ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = cs.letterSpacing;
+    const m = ctx.measureText(span.textContent!), base = b.top + (b.height + m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+    const outlined = cs.webkitTextStrokeWidth && parseFloat(cs.webkitTextStrokeWidth) > 0;
+    if (outlined) { ctx.lineWidth = parseFloat(cs.webkitTextStrokeWidth) * 1.4; ctx.strokeStyle = '#f4f5f7'; ctx.strokeText(span.textContent!, b.left, base); }
+    else { ctx.fillStyle = '#f4f5f7'; ctx.fillText(span.textContent!, b.left, base); }
+  }
+  ctx.globalAlpha = 1;
+}
 const R = () => Math.max(62, Math.min(130, innerWidth * 0.1));
 const big = { x: 0, y: 0 }, heroTarget = { x: 0, y: 0 };
 const kids = [0.34, 0.26, 0.2].map((s, i) => ({ s, x: 0, y: 0, vx: 0, vy: 0, phase: i * 2.1, speed: 0.00042 + i * 0.00013 }));
@@ -81,6 +115,7 @@ function heroFrame(t: number) {
     k.vx = (k.vx + (gx - k.x) * 0.0016 * dt) * 0.88; k.vy = (k.vy + (gy - k.y) * 0.0016 * dt) * 0.88;
     k.x += k.vx * dt * 0.06; k.y += k.vy * dt * 0.06;
   }
+  if (gpu) paintStage();
   drops.setShapes([
     { x: big.x, y: big.y, w: rad * 2, h: rad * 2, r: rad },
     ...kids.map(k => ({ x: k.x, y: k.y, w: rad * 2 * k.s, h: rad * 2 * k.s, r: rad * k.s })),

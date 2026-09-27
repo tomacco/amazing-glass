@@ -3,6 +3,7 @@ import { computeMaps, displacementScale, pngUrl, rawOffsets, shaders, type MapPi
 import { bezelWidth, boxDistance, smoothMin, type Box } from './optics';
 import { createFilter, cssBackdrop, supportsRefraction, updateFilter } from './filter';
 import { CpuRefraction } from './fallback';
+import { FieldGL, webgl2Available } from './field-gl';
 
 export type { Box };
 
@@ -39,6 +40,10 @@ export class GlassField {
   private lastSet = 0;
   private settle = 0;
   private sprites = new Map<string, MapPixels>();
+  /** Which renderer is active: 'svg' (stable path) or 'webgl' (experimental, opt-in). */
+  readonly renderer: 'svg' | 'webgl' = 'svg';
+  private gl?: FieldGL;
+  private tint: [number, number, number, number] = [1, 1, 1, 0.05];
   /** Timing of the last frame, for benchmarks: total, and the part spent on neck regions. */
   lastFrame = { ms: 0, regionMs: 0, regions: 0 };
 
@@ -48,8 +53,12 @@ export class GlassField {
    * - `fit`: shapes are given in the coordinates of the element's offset parent, and the
    *   element resizes itself to just the shapes, which keeps the per-pixel work small.
    * - `margin`: extra room around fitted shapes, for the merge bridges and the rim.
+   * - `renderer: 'webgl'` (experimental) with `backdrop: canvas`: render on the GPU from a
+   *   canvas the page draws itself. The element then covers the area the shapes move in, and
+   *   shapes are in its coordinates; `fit` is ignored. Falls back to the SVG path when WebGL2
+   *   is unavailable. Check `field.renderer` to see which one runs.
    */
-  constructor(el: HTMLElement, opts: { variant?: GlassVariant; params?: Partial<GlassParams>; merge?: number; fit?: boolean; margin?: number } = {}) {
+  constructor(el: HTMLElement, opts: { variant?: GlassVariant; params?: Partial<GlassParams>; merge?: number; fit?: boolean; margin?: number; renderer?: 'svg' | 'webgl'; backdrop?: HTMLCanvasElement } = {}) {
     this.el = el;
     this.params = resolveParams(opts.variant ?? 'clear', opts.params);
     this.merge = opts.merge ?? 36;
@@ -62,10 +71,38 @@ export class GlassField {
     this.layer.className = 'ag-refract';
     this.layer.setAttribute('aria-hidden', 'true');
     el.prepend(this.layer);
+    if (opts.renderer === 'webgl' && opts.backdrop && webgl2Available()) {
+      try {
+        this.gl = new FieldGL(el, opts.backdrop);
+        (this as { renderer: 'svg' | 'webgl' }).renderer = 'webgl';
+        this.fit = false;
+        el.classList.add('ag-field-gl');
+        this.readTint();
+      } catch { this.gl = undefined; }
+    }
+  }
+
+  /** The tint comes from CSS (--ag-tint), so the GPU path honours the same theming. */
+  private readTint() {
+    const probe = getComputedStyle(this.layer).backgroundColor;
+    const m = probe.match(/rgba?\(([^)]+)\)/);
+    if (!m) return;
+    const [r, g, b, a = 1] = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+    this.tint = [r / 255, g / 255, b / 255, a];
   }
 
   setShapes(shapes: Box[]) {
     this.shapes = shapes;
+    if (this.gl) {
+      if (!this.frame) this.frame = requestAnimationFrame(() => {
+        this.frame = 0;
+        const t0 = performance.now();
+        this.gl!.draw(this.shapes, { ...this.params, zoom: 1 }, this.merge, this.tint);
+        this.presented++;
+        this.lastFrame = { ms: performance.now() - t0, regionMs: 0, regions: 0 };
+      });
+      return;
+    }
     // Updates arriving faster than every 100 ms mean motion: render a draft now and a
     // full-quality frame once things settle.
     const now = performance.now(), live = now - this.lastSet < 100;
@@ -78,6 +115,7 @@ export class GlassField {
   setParams(params: Partial<GlassParams>) {
     this.params = { ...this.params, ...params };
     this.sprites.clear();
+    if (this.gl) this.readTint();
     this.setShapes(this.shapes);
   }
 
@@ -255,8 +293,9 @@ export class GlassField {
     clearTimeout(this.settle);
     this.filter?.remove();
     this.cpu?.destroy();
+    this.gl?.destroy();
     this.layer.remove();
-    this.el.classList.remove('ag-glass', 'ag-field');
+    this.el.classList.remove('ag-glass', 'ag-field', 'ag-field-gl');
   }
 }
 

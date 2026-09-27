@@ -32,6 +32,10 @@ export declare class GlassField {
     private lastSet;
     private settle;
     private sprites;
+    /** Which renderer is active: 'svg' (stable path) or 'webgl' (experimental, opt-in). */
+    readonly renderer: 'svg' | 'webgl';
+    private gl?;
+    private tint;
     /** Timing of the last frame, for benchmarks: total, and the part spent on neck regions. */
     lastFrame: {
         ms: number;
@@ -44,6 +48,10 @@ export declare class GlassField {
      * - `fit`: shapes are given in the coordinates of the element's offset parent, and the
      *   element resizes itself to just the shapes, which keeps the per-pixel work small.
      * - `margin`: extra room around fitted shapes, for the merge bridges and the rim.
+     * - `renderer: 'webgl'` (experimental) with `backdrop: canvas`: render on the GPU from a
+     *   canvas the page draws itself. The element then covers the area the shapes move in, and
+     *   shapes are in its coordinates; `fit` is ignored. Falls back to the SVG path when WebGL2
+     *   is unavailable. Check `field.renderer` to see which one runs.
      */
     constructor(el: HTMLElement, opts?: {
         variant?: GlassVariant;
@@ -51,7 +59,11 @@ export declare class GlassField {
         merge?: number;
         fit?: boolean;
         margin?: number;
+        renderer?: 'svg' | 'webgl';
+        backdrop?: HTMLCanvasElement;
     });
+    /** The tint comes from CSS (--ag-tint), so the GPU path honours the same theming. */
+    private readTint;
     setShapes(shapes: Box[]): void;
     setParams(params: Partial<GlassParams>): void;
     /** Cached maps for one shape, drawn with the field's shared rim width and scale. */

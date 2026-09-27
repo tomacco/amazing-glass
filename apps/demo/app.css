@@ -41,6 +41,15 @@ h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
 @keyframes rise { from { transform: translateY(28px); opacity: 0; } }
 
 .drops { z-index: 2; pointer-events: none; }
+/* GPU hero: the stage canvas shows the colour field and the headline; the page's own
+   headline stays in place for screen readers but draws nothing. */
+.hero-stage { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.hero.gpu .hero-bg { visibility: hidden; }
+.hero.gpu .hero-title span { color: transparent !important; -webkit-text-stroke-color: transparent !important; }
+.drops.ag-field-gl { position: absolute; inset: 0; }
+/* The GPU renderer only sees the stage canvas, so page content it cannot bend stays above it. */
+.hero.gpu .hero-sub, .hero.gpu .hero-actions, .hero.gpu .nav { position: relative; z-index: 3; }
+.renderer-note { position: absolute; right: 20px; bottom: 16px; font: 500 11px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); z-index: 3; }
 .drops.ag-glass[data-variant] { --ag-tint: rgb(255 255 255 / 0.05); }
 .drop-handle { position: absolute; left: 0; top: 0; z-index: 3; border-radius: 50%; cursor: grab; touch-action: none; }
 .drop-handle:active { cursor: grabbing; }

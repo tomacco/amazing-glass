@@ -12,6 +12,13 @@ Instructions for AI coding agents using or changing amazing-glass. Humans are we
   `useGlass(ref)` in React, `v-glass` in Vue.
 - Full reference: `docs/API.md`. It is generated; trust it over memory.
 
+## Support levels
+
+Every feature is stable, limited or experimental; the list is `FEATURES` in `src/core/support.ts`
+and `featureStatus(id)` at runtime. Do not recommend an experimental feature (for example
+`GlassField` with `renderer: 'webgl'`) without saying it is experimental. When you add a
+feature, add it there with honest `verified` text: what was actually tested, not what should work.
+
 ## Rules that break glass if you ignore them
 
 1. Glass needs something behind it. Over a flat colour it looks like a plain tinted box.

@@ -75,15 +75,11 @@ import { Switch } from 'amazing-glass/vue';</code></pre></div>
     </section>
 
     <section id="support">
-      <h2>Browser support</h2>
-      <div class="table"><table>
-        <thead><tr><th>Browser</th><th>Refraction over page content</th><th>Refraction over registered canvases</th><th>Frost, tint, rim</th></tr></thead>
-        <tbody>
-          <tr><td>Chrome, Edge, Arc, Brave, Opera</td><td>Yes (SVG backdrop filter)</td><td>Yes</td><td>Yes</td></tr>
-          <tr><td>Safari</td><td>No</td><td>Yes (CPU)</td><td>Yes</td></tr>
-          <tr><td>Firefox</td><td>No</td><td>Yes (CPU)</td><td>Yes</td></tr>
-        </tbody></table></div>
-      <p class="muted">Respects <code>prefers-reduced-motion</code>, <code>prefers-reduced-transparency</code> and <code>prefers-contrast</code>. Force the fallback anywhere with <code>?ag-fallback</code> in the URL.</p>
+      <h2>Support levels</h2>
+      <p>Every feature carries one. Your code can ask at runtime with <code>featureStatus(id)</code>. The last column is this browser, right now.</p>
+      <div class="table" id="support-table"></div>
+      <div id="levels"></div>
+      <p class="muted">Respects <code>prefers-reduced-motion</code>, <code>prefers-reduced-transparency</code> and <code>prefers-contrast</code>. Force the Safari and Firefox fallback anywhere with <code>?ag-fallback</code> in the URL.</p>
     </section>
   </main>
 </div>

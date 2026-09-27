@@ -49,3 +49,7 @@
 @media (prefers-contrast: more) {
   .ag-glass { outline: 1px solid var(--ag-label-2); }
 }
+
+/* GPU field: the canvas draws the glass, the refract layer only carries the tint for theming. */
+.ag-glass.ag-field-gl > .ag-refract { visibility: hidden; }
+.ag-glass.ag-field-gl > .ag-gl { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }

@@ -83,3 +83,15 @@ section { padding-block: 40px; border-top: 1px solid var(--rule); }
 .type-scale small { font: 400 12px var(--mono); color: var(--ink-3); }
 .type-scale code { color: var(--ink-3); text-align: right; font-size: 12px; }
 :focus-visible { outline-color: var(--blue); }
+
+.level { display: inline-block; font: 600 11px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 8px; border-radius: 6px; white-space: nowrap; }
+.level.stable { background: rgb(52 199 89 / 0.16); color: #1c8a3a; }
+.level.limited { background: rgb(255 141 40 / 0.16); color: #a35a00; }
+.level.experimental { background: rgb(203 48 224 / 0.14); color: #9a1fad; }
+@media (prefers-color-scheme: dark) { .level.stable { color: #5fdc7c; } .level.limited { color: #ffb45c; } .level.experimental { color: #e584f5; } }
+.levels { list-style: none; padding: 0; display: grid; gap: 8px; margin: 16px 0; }
+.levels li { display: flex; gap: 10px; align-items: baseline; }
+#support-table table { min-width: 880px; table-layout: fixed; }
+#support-table td:first-child { white-space: normal; width: 34%; }
+#support-table th:nth-child(2) { width: 13%; }
+#support-table th:nth-child(n+3) { width: 13%; }

@@ -44,7 +44,18 @@ for (const c of COMPONENTS) {
   if (c.events.length) md += `### Events\n\n${tbl(c.events, ['Event', 'Type', '', 'When'])}\n\n`;
   if (c.css?.length) md += `### CSS custom properties\n\n${tbl(c.css)}\n\n`;
 }
+// Support levels, from src/core/support.ts, into API.md and the README (between markers).
+const { FEATURES: F, LEVELS: L } = await import(root + 'src/core/support.ts');
+const badge = (l: string) => ({ stable: 'Stable', limited: 'Limited', experimental: 'Experimental' } as Record<string, string>)[l];
+const supportMd = `| Feature | Level | Chrome, Edge, Arc | Safari | Firefox |\n|---|---|---|---|---|\n` +
+  F.map((f: any) => `| ${cell(f.name)}${f.notes ? `<br><sub>${cell(f.notes)}</sub>` : ''} | **${badge(f.level)}** | ${cell(f.chromium)} | ${cell(f.safari)} | ${cell(f.firefox)} |`).join('\n') +
+  `\n\n` + Object.entries(L).map(([k, v]) => `- **${badge(k)}:** ${v}`).join('\n') +
+  `\n\nWhere each was actually checked:\n\n` + F.map((f: any) => `- ${f.name.split(':')[0]}: ${f.verified}.`).join('\n');
+md = md.replace('## Material parameters', `## Support levels\n\nQuery at runtime with \`featureStatus(id)\` from \`amazing-glass/core\`.\n\n${supportMd}\n\n## Material parameters`);
 writeFileSync(root + 'docs/API.md', md);
+const readme = readFileSync(root + 'README.md', 'utf8');
+const marked = readme.replace(/<!-- support:start -->[\s\S]*?<!-- support:end -->/, `<!-- support:start -->\n${supportMd}\n<!-- support:end -->`);
+if (marked !== readme) writeFileSync(root + 'README.md', marked);
 console.log('docs ok');
 if (only === 'lib') process.exit(0);
 

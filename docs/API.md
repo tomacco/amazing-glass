@@ -4,6 +4,32 @@ Generated from `apps/guide/api.ts` by `bun run build`. Do not edit by hand.
 
 Every element is also available as a React component (`amazing-glass/react`) and a Vue component (`amazing-glass/vue`) with the same props. In React, handlers receive the new value first: `onChange={(value, event) => …}`. In Vue, stateful components support `v-model`.
 
+## Support levels
+
+Query at runtime with `featureStatus(id)` from `amazing-glass/core`.
+
+| Feature | Level | Chrome, Edge, Arc | Safari | Firefox |
+|---|---|---|---|---|
+| Glass material: frost, tint, rim light, adaptive ink | **Stable** | Full | Full | Full |
+| All ag-* components, React and Vue bindings | **Stable** | Full | Full | Full |
+| Refraction over page content<br><sub>Needs SVG filters inside backdrop-filter, which only Chromium runs.</sub> | **Limited** | Full | Fallback: frost, tint, rim | Fallback: frost, tint, rim |
+| Refraction over canvases passed to registerBackdrop() | **Stable** | Full (SVG filter) | Full (CPU) | Full (CPU) |
+| Liquid merging: GlassField<br><sub>Costs CPU every frame while shapes move (about 8 ms per frame on a desktop for four shapes).</sub> | **Limited** | Full | Over registered canvases only (CPU) | Over registered canvases only (CPU) |
+| Liquid merging on the GPU: GlassField renderer "webgl"<br><sub>Bends only the backdrop canvas you pass, not page elements above it. Falls back to the SVG path without WebGL2.</sub> | **Experimental** | Full | Expected (WebGL2), untested | Expected (WebGL2), untested |
+
+- **Stable:** Works in every current browser, with a documented fallback where a browser lacks something. API stable.
+- **Limited:** API stable. The full effect only in the browsers listed; the others get the fallback.
+- **Experimental:** Works, but the API or look may change in a minor version. Opt-in.
+
+Where each was actually checked:
+
+- Glass material: Chrome; Safari and Firefox via the same CSS path in forced-fallback mode.
+- All ag-* components, React and Vue bindings: Chrome desktop and mobile emulation, React 19, Vue 3.5.
+- Refraction over page content: Chrome, and measured against SwiftUI on macOS.
+- Refraction over canvases passed to registerBackdrop(): Chrome; the CPU path by forcing it in Chrome, not yet in Safari or Firefox themselves.
+- Liquid merging: Chrome desktop and mobile emulation.
+- Liquid merging on the GPU: Chrome desktop and mobile emulation.
+
 ## Material parameters
 
 Pass as `params` (JSON attribute or prop) or call `glass.setParams({...})`.

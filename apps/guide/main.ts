@@ -1,5 +1,5 @@
 import '../../src/elements';
-import { Glass, supportsRefraction, type GlassVariant } from '../../src/core';
+import { Glass, supportsRefraction, FEATURES, LEVELS, type GlassVariant } from '../../src/core';
 import type { AgSegmented, AgSwitch } from '../../src/elements';
 import { paint, type SceneName } from '../shared/scenes';
 import { COMPONENTS, PARAMS, type Row } from './api';
@@ -102,3 +102,9 @@ const paintAll = () => {
 requestAnimationFrame(paintAll);
 let t = 0;
 addEventListener('resize', () => { clearTimeout(t); t = window.setTimeout(paintAll, 150); });
+
+// Support levels, from the same data as the README and API reference.
+const levelName = { stable: 'Stable', limited: 'Limited', experimental: 'Experimental' } as const;
+$('#support-table').innerHTML = `<table><thead><tr><th>Feature</th><th>Level</th><th>Chrome, Edge, Arc</th><th>Safari</th><th>Firefox</th><th>This browser</th></tr></thead><tbody>${FEATURES.map(f =>
+  `<tr><td>${esc(f.name)}${f.notes ? `<br><small class="muted">${esc(f.notes)}</small>` : ''}</td><td><span class="level ${f.level}">${levelName[f.level]}</span></td><td>${esc(f.chromium)}</td><td>${esc(f.safari)}</td><td>${esc(f.firefox)}</td><td>${f.available() ? 'Full effect' : 'Fallback'}</td></tr>`).join('')}</tbody></table>`;
+$('#levels').innerHTML = `<ul class="levels">${Object.entries(LEVELS).map(([k, v]) => `<li><span class="level ${k}">${levelName[k as keyof typeof levelName]}</span> ${esc(v)}</li>`).join('')}</ul>`;

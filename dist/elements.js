@@ -14,7 +14,7 @@ import {
   AgSearch2,
   AgToolbar2,
   AgToolbarGroup2
-} from "./chunks/index-r0t3mx9b.js";
+} from "./chunks/index-027yp0p0.js";
 import {
   VARIANTS2,
   resolveParams2,
@@ -28,9 +28,13 @@ import {
   luminanceAt2,
   refresh2,
   Glass2,
+  webgl2Available2,
   GlassField2,
+  LEVELS2,
+  FEATURES2,
+  featureStatus2,
   glass2
-} from "./chunks/index-n6yqah04.js";
+} from "./chunks/index-z0bgpr8b.js";
 export {
   AgAlert2 as AgAlert,
   AgButton2 as AgButton,
@@ -44,10 +48,13 @@ export {
   AgTabBar2 as AgTabBar,
   AgToolbar2 as AgToolbar,
   AgToolbarGroup2 as AgToolbarGroup,
+  FEATURES2 as FEATURES,
   Glass2 as Glass,
   GlassField2 as GlassField,
+  LEVELS2 as LEVELS,
   VARIANTS2 as VARIANTS,
   backdropChanged2 as backdropChanged,
+  featureStatus2 as featureStatus,
   glass2 as glass,
   icon2 as icon,
   iconNames2 as iconNames,
@@ -60,5 +67,6 @@ export {
   rimProfile2 as rimProfile,
   roundedRect2 as roundedRect,
   smoothMin2 as smoothMin,
-  supportsRefraction2 as supportsRefraction
+  supportsRefraction2 as supportsRefraction,
+  webgl2Available2 as webgl2Available
 };

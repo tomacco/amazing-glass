@@ -552,6 +552,201 @@ class Glass2 {
     this.el.classList.remove("ag-glass");
   }
 }
+// src/core/field-gl.ts
+var MAX_SHAPES = 16;
+var VERT = `#version 300 es
+in vec2 p; void main() { gl_Position = vec4(p, 0., 1.); }`;
+var FRAG = `#version 300 es
+precision highp float;
+uniform sampler2D backdrop;
+uniform vec2 size;          // overlay size, CSS px
+uniform float dpr;
+uniform vec4 bd;            // backdrop rect relative to overlay: x, y, w, h (CSS px)
+uniform vec4 boxes[${MAX_SHAPES}];   // x, y, w, h
+uniform float radii[${MAX_SHAPES}];
+uniform int count;
+uniform float k, bezelW, thick, ior, disp, frost, sat, lum, contrast, rimK, rimW, shadeK, light;
+uniform vec4 tint;          // rgb + alpha
+out vec4 o;
+
+float box(vec2 q, vec4 b, float r) {
+  vec2 d = abs(q - b.xy) - (b.zw * 0.5 - r);
+  return length(max(d, 0.)) + min(max(d.x, d.y), 0.) - r;
+}
+float field(vec2 q) {
+  float d = 1e9;
+  for (int i = 0; i < ${MAX_SHAPES}; i++) {
+    if (i >= count) break;
+    float b = box(q, boxes[i], radii[i]);
+    float h = max(k - abs(d - b), 0.) / k;
+    d = min(d, b) - h * h * k * 0.25;
+  }
+  return d;
+}
+float rimH(float t) { return pow(1. - pow(1. - t, 4.), 0.25); }
+float refr(float t) {
+  if (t >= 1.) return 0.;
+  float e = 0.001, t0 = max(t, e), t1 = min(t0 + e, 1.);
+  float slope = (rimH(t1) - rimH(t0)) / e * thick / bezelW;
+  float inc = atan(slope), rf = asin(sin(inc) / ior);
+  return thick * tan(inc - rf);
+}
+vec3 look(vec2 q) {
+  vec2 uv = (q - bd.xy) / bd.zw;
+  return textureLod(backdrop, vec2(uv.x, 1. - uv.y), frost).rgb;
+}
+vec3 grade(vec3 c) {
+  float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  c = mix(vec3(l), c, sat) * lum;
+  return (c - 0.5) * contrast + 0.5;
+}
+void main() {
+  vec2 q = vec2(gl_FragCoord.x, size.y * dpr - gl_FragCoord.y) / dpr;
+  float d = field(q);
+  if (d > 1.5) { o = vec4(0.); return; }
+  vec2 g = vec2(field(q + vec2(.5, 0.)) - field(q - vec2(.5, 0.)), field(q + vec2(0., .5)) - field(q - vec2(0., .5)));
+  vec2 n = g / max(length(g), 1e-6);
+  float depth = -d;
+  vec2 sh = -n * refr(clamp(depth / bezelW, 0., 1.));
+  vec3 c = vec3(look(q + sh * (1. + disp)).r, look(q + sh).g, look(q + sh * (1. - disp)).b);
+  c = grade(c);
+  c = mix(c, tint.rgb, tint.a);
+  vec2 L = vec2(cos(radians(light)), sin(radians(light)));
+  float facing = dot(n, L), lit = pow(max(0., facing), 1.6), back = pow(max(0., -facing), 2.2) * 0.55;
+  float dd = depth * dpr, rw = rimW * dpr, glow = bezelW * 0.55 * dpr, aa = clamp(dd + 1., 0., 1.);
+  float line = exp(-pow(dd / rw, 2.)) * (0.22 + 0.78 * (lit + back));
+  float soft = exp(-dd / glow) * 0.22 * (lit + back * 0.6);
+  float a = min(1., (line + soft) * aa * rimK);
+  float shade = exp(-pow((dd - rw * 1.6) / (rw * 0.9), 2.)) * shadeK * aa * (1. - lit);
+  c = mix(c, vec3(1.), a);
+  c = mix(c, vec3(0.), shade);
+  float cover = clamp(depth * dpr + 0.5, 0., 1.);
+  o = vec4(c * cover, cover);   // premultiplied
+}`;
+function webgl2Available2() {
+  try {
+    return !!document.createElement("canvas").getContext("webgl2");
+  } catch {
+    return false;
+  }
+}
+
+class FieldGL {
+  host;
+  backdrop;
+  canvas;
+  gl;
+  tex;
+  u = {};
+  lost = false;
+  constructor(host, backdrop) {
+    this.host = host;
+    this.backdrop = backdrop;
+    this.canvas = document.createElement("canvas");
+    this.canvas.className = "ag-gl";
+    this.canvas.setAttribute("aria-hidden", "true");
+    host.prepend(this.canvas);
+    const gl = this.canvas.getContext("webgl2", { premultipliedAlpha: true, antialias: false });
+    if (!gl)
+      throw new Error("WebGL2 unavailable");
+    this.gl = gl;
+    const compile = (type, src) => {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+        throw new Error(gl.getShaderInfoLog(s) ?? "shader");
+      return s;
+    };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
+      throw new Error(gl.getProgramInfoLog(prog) ?? "link");
+    gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "p");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    for (const n of ["backdrop", "size", "dpr", "bd", "boxes", "radii", "count", "k", "bezelW", "thick", "ior", "disp", "frost", "sat", "lum", "contrast", "rimK", "rimW", "shadeK", "light", "tint"])
+      this.u[n] = gl.getUniformLocation(prog, n);
+    this.tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, this.tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    this.canvas.addEventListener("webglcontextlost", (e) => {
+      e.preventDefault();
+      this.lost = true;
+    });
+  }
+  draw(shapes, p, merge, tint) {
+    if (this.lost)
+      return;
+    const gl = this.gl, host = this.host;
+    const { clientWidth: w, clientHeight: h } = host, dpr = Math.min(2, devicePixelRatio || 1);
+    if (!w || !h)
+      return;
+    const cw = Math.round(w * dpr), ch = Math.round(h * dpr);
+    if (this.canvas.width !== cw || this.canvas.height !== ch) {
+      this.canvas.width = cw;
+      this.canvas.height = ch;
+    }
+    const hr = host.getBoundingClientRect(), br = this.backdrop.getBoundingClientRect();
+    gl.bindTexture(gl.TEXTURE_2D, this.tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.backdrop);
+    if (p.blur > 0.5) {
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    } else
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    const n = Math.min(MAX_SHAPES, shapes.length);
+    const boxes = new Float32Array(MAX_SHAPES * 4), radii = new Float32Array(MAX_SHAPES);
+    for (let i = 0;i < n; i++) {
+      const s = shapes[i];
+      boxes.set([s.x, s.y, s.w, s.h], i * 4);
+      radii[i] = Math.min(s.r, s.w / 2, s.h / 2);
+    }
+    const minSide = Math.min(...shapes.slice(0, n).map((s) => Math.min(s.w, s.h)));
+    const bz = bezelWidth(minSide, minSide, p.bezel, p.maxBezel);
+    const texelPerCss = this.backdrop.width / Math.max(1, br.width);
+    const U = this.u;
+    gl.uniform1i(U.backdrop, 0);
+    gl.uniform2f(U.size, w, h);
+    gl.uniform1f(U.dpr, dpr);
+    gl.uniform4f(U.bd, br.left - hr.left, br.top - hr.top, br.width, br.height);
+    gl.uniform4fv(U.boxes, boxes);
+    gl.uniform1fv(U.radii, radii);
+    gl.uniform1i(U.count, n);
+    gl.uniform1f(U.k, Math.max(0.001, merge));
+    gl.uniform1f(U.bezelW, bz);
+    gl.uniform1f(U.thick, bz * p.depth);
+    gl.uniform1f(U.ior, p.ior);
+    gl.uniform1f(U.disp, p.dispersion);
+    gl.uniform1f(U.frost, p.blur > 0.5 ? Math.max(0, Math.log2(p.blur * texelPerCss)) : 0);
+    gl.uniform1f(U.sat, p.saturate);
+    gl.uniform1f(U.lum, p.lum);
+    gl.uniform1f(U.contrast, p.contrast);
+    gl.uniform1f(U.rimK, p.rim);
+    gl.uniform1f(U.rimW, p.rimWidth);
+    gl.uniform1f(U.shadeK, p.shade);
+    gl.uniform1f(U.light, p.light);
+    gl.uniform4f(U.tint, tint[0], tint[1], tint[2], tint[3]);
+    gl.viewport(0, 0, cw, ch);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  destroy() {
+    this.gl.getExtension("WEBGL_lose_context")?.loseContext();
+    this.canvas.remove();
+  }
+}
+
 // src/core/field.ts
 var uid2 = 0;
 
@@ -570,6 +765,9 @@ class GlassField2 {
   lastSet = 0;
   settle = 0;
   sprites = new Map;
+  renderer = "svg";
+  gl;
+  tint = [1, 1, 1, 0.05];
   lastFrame = { ms: 0, regionMs: 0, regions: 0 };
   constructor(el, opts = {}) {
     this.el = el;
@@ -585,9 +783,39 @@ class GlassField2 {
     this.layer.className = "ag-refract";
     this.layer.setAttribute("aria-hidden", "true");
     el.prepend(this.layer);
+    if (opts.renderer === "webgl" && opts.backdrop && webgl2Available2()) {
+      try {
+        this.gl = new FieldGL(el, opts.backdrop);
+        this.renderer = "webgl";
+        this.fit = false;
+        el.classList.add("ag-field-gl");
+        this.readTint();
+      } catch {
+        this.gl = undefined;
+      }
+    }
+  }
+  readTint() {
+    const probe = getComputedStyle(this.layer).backgroundColor;
+    const m = probe.match(/rgba?\(([^)]+)\)/);
+    if (!m)
+      return;
+    const [r, g, b, a = 1] = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+    this.tint = [r / 255, g / 255, b / 255, a];
   }
   setShapes(shapes) {
     this.shapes = shapes;
+    if (this.gl) {
+      if (!this.frame)
+        this.frame = requestAnimationFrame(() => {
+          this.frame = 0;
+          const t0 = performance.now();
+          this.gl.draw(this.shapes, { ...this.params, zoom: 1 }, this.merge, this.tint);
+          this.presented++;
+          this.lastFrame = { ms: performance.now() - t0, regionMs: 0, regions: 0 };
+        });
+      return;
+    }
     const now = performance.now(), live = now - this.lastSet < 100;
     this.lastSet = now;
     clearTimeout(this.settle);
@@ -602,6 +830,8 @@ class GlassField2 {
   setParams(params) {
     this.params = { ...this.params, ...params };
     this.sprites.clear();
+    if (this.gl)
+      this.readTint();
     this.setShapes(this.shapes);
   }
   sprite(s, bezel, scale, draft) {
@@ -794,8 +1024,9 @@ class GlassField2 {
     clearTimeout(this.settle);
     this.filter?.remove();
     this.cpu?.destroy();
+    this.gl?.destroy();
     this.layer.remove();
-    this.el.classList.remove("ag-glass", "ag-field");
+    this.el.classList.remove("ag-glass", "ag-field", "ag-field-gl");
   }
 }
 var fieldDpr = (draft) => draft ? 1 : Math.min(2, globalThis.devicePixelRatio || 1);
@@ -842,6 +1073,81 @@ function stamp(dst, src, x, y, mode) {
     }
   }
 }
+// src/core/support.ts
+var LEVELS2 = {
+  stable: "Works in every current browser, with a documented fallback where a browser lacks something. API stable.",
+  limited: "API stable. The full effect only in the browsers listed; the others get the fallback.",
+  experimental: "Works, but the API or look may change in a minor version. Opt-in."
+};
+var FEATURES2 = [
+  {
+    id: "material",
+    name: "Glass material: frost, tint, rim light, adaptive ink",
+    level: "stable",
+    chromium: "Full",
+    safari: "Full",
+    firefox: "Full",
+    verified: "Chrome; Safari and Firefox via the same CSS path in forced-fallback mode",
+    available: () => true
+  },
+  {
+    id: "components",
+    name: "All ag-* components, React and Vue bindings",
+    level: "stable",
+    chromium: "Full",
+    safari: "Full",
+    firefox: "Full",
+    verified: "Chrome desktop and mobile emulation, React 19, Vue 3.5",
+    available: () => true
+  },
+  {
+    id: "refraction-dom",
+    name: "Refraction over page content",
+    level: "limited",
+    chromium: "Full",
+    safari: "Fallback: frost, tint, rim",
+    firefox: "Fallback: frost, tint, rim",
+    verified: "Chrome, and measured against SwiftUI on macOS",
+    notes: "Needs SVG filters inside backdrop-filter, which only Chromium runs.",
+    available: () => supportsRefraction2
+  },
+  {
+    id: "refraction-canvas",
+    name: "Refraction over canvases passed to registerBackdrop()",
+    level: "stable",
+    chromium: "Full (SVG filter)",
+    safari: "Full (CPU)",
+    firefox: "Full (CPU)",
+    verified: "Chrome; the CPU path by forcing it in Chrome, not yet in Safari or Firefox themselves",
+    available: () => true
+  },
+  {
+    id: "field",
+    name: "Liquid merging: GlassField",
+    level: "limited",
+    chromium: "Full",
+    safari: "Over registered canvases only (CPU)",
+    firefox: "Over registered canvases only (CPU)",
+    verified: "Chrome desktop and mobile emulation",
+    notes: "Costs CPU every frame while shapes move (about 8 ms per frame on a desktop for four shapes).",
+    available: () => supportsRefraction2
+  },
+  {
+    id: "field-webgl",
+    name: 'Liquid merging on the GPU: GlassField renderer "webgl"',
+    level: "experimental",
+    chromium: "Full",
+    safari: "Expected (WebGL2), untested",
+    firefox: "Expected (WebGL2), untested",
+    verified: "Chrome desktop and mobile emulation",
+    notes: "Bends only the backdrop canvas you pass, not page elements above it. Falls back to the SVG path without WebGL2.",
+    available: () => webgl2Available2()
+  }
+];
+function featureStatus2(id) {
+  const f = FEATURES2.find((x) => x.id === id);
+  return f && { level: f.level, available: f.available() };
+}
 // src/core/index.ts
 function glass2(node, options = {}) {
   const g = new Glass2(node, options);
@@ -861,4 +1167,4 @@ function glass2(node, options = {}) {
   };
 }
 
-export { VARIANTS2, resolveParams2, roundedRect2, smoothMin2, refractOffset2, rimProfile2, supportsRefraction2, registerBackdrop2, backdropChanged2, luminanceAt2, refresh2, Glass2, GlassField2, glass2 };
+export { VARIANTS2, resolveParams2, roundedRect2, smoothMin2, refractOffset2, rimProfile2, supportsRefraction2, registerBackdrop2, backdropChanged2, luminanceAt2, refresh2, Glass2, webgl2Available2, GlassField2, LEVELS2, FEATURES2, featureStatus2, glass2 };

@@ -148,13 +148,50 @@ The full list, with units, is in [docs/API.md](docs/API.md#material-parameters).
 
 ## Where it works
 
-| Browser | Refraction over page content | Refraction over your canvases | Frost, tint, rim light |
-|---|---|---|---|
-| Chrome, Edge, Arc, Brave, Opera | Yes | Yes | Yes |
-| Safari | No | Yes | Yes |
-| Firefox | No | Yes | Yes |
+Every feature has a support level. **Stable** works everywhere, with a documented fallback where a browser lacks something. **Limited** has a stable API but shows the full effect only in some browsers. **Experimental** works, may still change, and is opt-in. The table below is generated from `src/core/support.ts`, and your code can ask the same question at runtime:
 
-The bend needs SVG filters inside `backdrop-filter`, and only Chromium runs those. Safari and Firefox still get a good-looking frosted glass. Where the page painted the background itself (a `<canvas>` you pass to `registerBackdrop()`), they get real refraction too, computed on the CPU from the same maps. Add `?ag-fallback` to any URL to see the fallback in Chrome.
+```ts
+import { featureStatus } from 'amazing-glass/core';
+featureStatus('refraction-dom'); // { level: 'limited', available: true } in Chrome
+```
+
+<!-- support:start -->
+| Feature | Level | Chrome, Edge, Arc | Safari | Firefox |
+|---|---|---|---|---|
+| Glass material: frost, tint, rim light, adaptive ink | **Stable** | Full | Full | Full |
+| All ag-* components, React and Vue bindings | **Stable** | Full | Full | Full |
+| Refraction over page content<br><sub>Needs SVG filters inside backdrop-filter, which only Chromium runs.</sub> | **Limited** | Full | Fallback: frost, tint, rim | Fallback: frost, tint, rim |
+| Refraction over canvases passed to registerBackdrop() | **Stable** | Full (SVG filter) | Full (CPU) | Full (CPU) |
+| Liquid merging: GlassField<br><sub>Costs CPU every frame while shapes move (about 8 ms per frame on a desktop for four shapes).</sub> | **Limited** | Full | Over registered canvases only (CPU) | Over registered canvases only (CPU) |
+| Liquid merging on the GPU: GlassField renderer "webgl"<br><sub>Bends only the backdrop canvas you pass, not page elements above it. Falls back to the SVG path without WebGL2.</sub> | **Experimental** | Full | Expected (WebGL2), untested | Expected (WebGL2), untested |
+
+- **Stable:** Works in every current browser, with a documented fallback where a browser lacks something. API stable.
+- **Limited:** API stable. The full effect only in the browsers listed; the others get the fallback.
+- **Experimental:** Works, but the API or look may change in a minor version. Opt-in.
+
+Where each was actually checked:
+
+- Glass material: Chrome; Safari and Firefox via the same CSS path in forced-fallback mode.
+- All ag-* components, React and Vue bindings: Chrome desktop and mobile emulation, React 19, Vue 3.5.
+- Refraction over page content: Chrome, and measured against SwiftUI on macOS.
+- Refraction over canvases passed to registerBackdrop(): Chrome; the CPU path by forcing it in Chrome, not yet in Safari or Firefox themselves.
+- Liquid merging: Chrome desktop and mobile emulation.
+- Liquid merging on the GPU: Chrome desktop and mobile emulation.
+<!-- support:end -->
+
+Add `?ag-fallback` to any URL to see the Safari and Firefox fallback in Chrome.
+
+### Experimental: liquid merging on the GPU
+
+`GlassField` normally rebuilds its images on the CPU every frame. When the content behind the glass is a canvas you draw, it can run as one WebGL2 shader instead. In our benchmark that took main-thread time from about 15 ms to 0.05 ms per frame, and the frame rate from 57 to the display's cap. The demo hero uses it.
+
+```ts
+const field = new GlassField(overlay, { renderer: 'webgl', backdrop: myCanvas, merge: 46 });
+field.renderer; // 'webgl', or 'svg' if WebGL2 was not available
+field.setShapes([{ x: 200, y: 150, w: 160, h: 160, r: 80 }, { x: 330, y: 170, w: 70, h: 70, r: 35 }]);
+```
+
+The catch: it only bends what is in `backdrop`. Page elements above that canvas are not part of it, so keep them above the glass layer. That is why it is experimental.
 
 ## The fine print
 
@@ -162,7 +199,7 @@ We would rather you hear these from us.
 
 - **The reference is macOS.** The fit ran against SwiftUI on macOS 27. iOS tunes its glass differently. The lens knobs and dark mode are hand-tuned, not measured yet.
 - **One backdrop rule to know.** If a parent of a glass element has `opacity` below 1, a `filter`, a `mask` or `mix-blend-mode`, the browser hides what is behind it from the glass. Animate `transform` on parents instead. The components already do.
-- **Liquid merging is CPU work.** `GlassField` melts nearby shapes into one surface by recomputing a distance field each frame. Keep it to a few hundred pixels square.
+- **Liquid merging is CPU work** on the stable path: about 8 ms per frame on a desktop for four moving shapes. Over a canvas you draw, the experimental GPU renderer makes it nearly free.
 - **Not SF Symbols.** The icons are our own drawings. SF Symbols are licensed for Apple platforms only. Bring your own with `registerIcon()`.
 - **Not affiliated with Apple.** Liquid Glass is Apple's design language, and their [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/materials) were the reference for every control. This is an independent project.
 
