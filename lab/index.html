@@ -1,0 +1,75 @@
+<!doctype html><meta charset="utf-8"><title>Glass match</title>
+<link rel="stylesheet" href="../dist/amazing-glass.css">
+<style>
+  body { margin: 0; background: #fff; }
+  #stage { position: relative; width: 800px; height: 400px; overflow: hidden; }
+  #stage canvas { position: absolute; inset: 0; width: 800px; height: 400px; z-index: -1; }
+  .g { position: absolute; }
+  /* No transitions: every screenshot must show the settled state. */
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+</style>
+<!-- Geometry mirrors native/GlassRef.swift exactly. -->
+<div id="stage"><canvas id="bg"></canvas>
+  <div class="g" data-k="regular" data-shape="regCap" style="left:95px;top:128px;width:220px;height:64px;border-radius:32px"></div>
+  <div class="g" data-k="clear" data-shape="clrCap" style="left:355px;top:128px;width:220px;height:64px;border-radius:32px"></div>
+  <div class="g" data-k="clear" data-shape="clrCirc" style="left:615px;top:115px;width:90px;height:90px;border-radius:45px"></div>
+  <div class="g" data-k="regular" data-shape="regRect" style="left:80px;top:255px;width:300px;height:110px;border-radius:34px"></div>
+  <div class="g" data-k="clear" data-shape="clrRect" style="left:420px;top:255px;width:300px;height:110px;border-radius:34px"></div>
+</div>
+<script type="module">
+import { Glass, registerBackdrop } from '../dist/core.js';
+const scene = new URLSearchParams(location.search).get('bg') || 'chart';
+const cv = document.getElementById('bg'); cv.width = 1600; cv.height = 800;
+const img = new Image(); img.src = `scenes/bg-${scene}.png`;
+await img.decode();
+const ctx = cv.getContext('2d', { willReadFrequently: true }); ctx.drawImage(img, 0, 0);
+registerBackdrop(cv);
+const glasses = [...document.querySelectorAll('.g')].map(el => ({ el, k: el.dataset.k, g: new Glass(el, { variant: el.dataset.k, tone: "light" }) }));
+
+// apply({ regular: {...}, clear: {...} }): engine params plus tint rgba and shadow alpha.
+window.apply = async P => {
+  for (const { el, k, g } of glasses) {
+    const p = P[k]; if (!p) continue;
+    g.setParams({ blur: p.blur, saturate: p.saturate, bezel: p.bezel, maxBezel: p.maxBezel, depth: p.depth, dispersion: p.dispersion, rim: p.rim, shade: p.shade, rimWidth: p.rimWidth, lum: p.lum, contrast: p.contrast, zoom: 1 });
+    el.style.setProperty('--ag-tint', `rgb(${p.tr} ${p.tg} ${p.tb} / ${p.ta})`);
+    el.style.setProperty('--ag-shadow', `0 ${p.sy ?? 6}px ${p.sb ?? 20}px rgb(0 0 0 / ${p.sa})`);
+  }
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await new Promise(r => setTimeout(r, 60));
+  return true;
+};
+
+// Reference and scoring. Regions are each shape's box plus a 10px margin for the shadow.
+let ref;
+window.loadRef = async (url, top) => {
+  const im = new Image(); im.src = url; await im.decode();
+  const c = document.createElement('canvas'); c.width = 1600; c.height = 800;
+  const x = c.getContext('2d'); x.drawImage(im, 0, -top);
+  ref = x.getImageData(0, 0, 1600, 800).data;
+  return im.width + 'x' + im.height;
+};
+const regions = glasses.map(({ el, k }) => ({ k, name: el.dataset.shape, x: el.offsetLeft - 10, y: el.offsetTop - 10, w: el.offsetWidth + 20, h: el.offsetHeight + 20 }));
+window.score = async url => {
+  const im = new Image(); im.src = url; await im.decode();
+  const c = document.createElement('canvas'); c.width = 1600; c.height = 800;
+  const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+  const d = x.getImageData(0, 0, 1600, 800).data;
+  const out = {};
+  for (const r of regions) {
+    let sum = 0, n = 0;
+    for (let yy = r.y * 2; yy < (r.y + r.h) * 2; yy++) for (let xx = r.x * 2; xx < (r.x + r.w) * 2; xx++) {
+      const i = (yy * 1600 + xx) * 4;
+      sum += Math.abs(d[i] - ref[i]) + Math.abs(d[i + 1] - ref[i + 1]) + Math.abs(d[i + 2] - ref[i + 2]);
+      n += 3;
+    }
+    out[r.name] = +(sum / n).toFixed(3);
+  }
+  return out;
+};
+if (location.search.includes('fitted')) {
+  const P = {};
+  for (const k of ['regular', 'clear']) { try { P[k] = (await (await fetch(`fit-${k}.json`)).json()).params; } catch {} }
+  await window.apply(P);
+}
+window.ready = true;
+</script>

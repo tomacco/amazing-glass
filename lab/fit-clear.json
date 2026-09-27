@@ -1,0 +1,35 @@
+{
+  "scene": "chart,dusk",
+  "variant": "clear",
+  "loss": 2.3313333333333333,
+  "regions": {
+    "chart": {
+      "clrCap": 2.412,
+      "clrCirc": 2.436,
+      "clrRect": 1.477
+    },
+    "dusk": {
+      "clrCap": 1.841,
+      "clrCirc": 1.95,
+      "clrRect": 3.872
+    }
+  },
+  "params": {
+    "blur": 12.0184,
+    "saturate": 1.3089,
+    "bezel": 0.4929,
+    "maxBezel": 32.4908,
+    "depth": 1.1958,
+    "dispersion": 0.0766,
+    "rim": 1.0082,
+    "shade": 0.03,
+    "rimWidth": 0.3,
+    "tr": 255,
+    "tg": 249.2528,
+    "tb": 255,
+    "ta": 0.235,
+    "sa": 0,
+    "lum": 1,
+    "contrast": 0.8619
+  }
+}

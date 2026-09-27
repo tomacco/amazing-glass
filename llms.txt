@@ -1,0 +1,18 @@
+# amazing-glass
+
+> Web components for liquid glass on the web: real refraction via SVG backdrop filters (Chromium), a CPU fallback over canvases elsewhere, presets fitted against SwiftUI's .glassEffect. Custom elements plus React and Vue bindings. MIT.
+
+## Docs
+
+- [README](https://github.com/tomacco/amazing-glass/blob/main/README.md): what it is, quick start, limits
+- [API reference](https://github.com/tomacco/amazing-glass/blob/main/docs/API.md): every element, attribute, property, event and material parameter
+- [Agent instructions](https://github.com/tomacco/amazing-glass/blob/main/AGENTS.md): rules that break glass, how to change the library
+- [Guide](https://tomacco.github.io/amazing-glass/guide/): every component live
+
+## Entry points
+
+- `amazing-glass`: defines all `<ag-*>` elements
+- `amazing-glass/core`: `Glass`, `GlassField`, `registerBackdrop`, presets
+- `amazing-glass/react`: React components and `useGlass`
+- `amazing-glass/vue`: Vue components and `vGlass`
+- `amazing-glass/styles.css`: required stylesheet

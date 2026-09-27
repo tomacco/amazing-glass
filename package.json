@@ -1,0 +1,79 @@
+{
+  "name": "amazing-glass",
+  "version": "0.1.0",
+  "description": "Liquid glass for the web: real refraction, tuned against Apple's own renderer. Web components with React and Vue bindings.",
+  "license": "MIT",
+  "author": "Ivan Tomac",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomacco/amazing-glass.git"
+  },
+  "homepage": "https://tomacco.github.io/amazing-glass/",
+  "keywords": [
+    "liquid glass",
+    "glassmorphism",
+    "refraction",
+    "web components",
+    "react",
+    "vue",
+    "backdrop-filter",
+    "ui"
+  ],
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/elements/index.d.ts",
+      "default": "./dist/elements.js"
+    },
+    "./core": {
+      "types": "./dist/types/core/index.d.ts",
+      "default": "./dist/core.js"
+    },
+    "./elements": {
+      "types": "./dist/types/elements/index.d.ts",
+      "default": "./dist/elements.js"
+    },
+    "./react": {
+      "types": "./dist/types/react/index.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./vue": {
+      "types": "./dist/types/vue/index.d.ts",
+      "default": "./dist/vue.js"
+    },
+    "./styles.css": "./dist/amazing-glass.css"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "vue": ">=3.3"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "build": "bun tools/build.ts",
+    "dev": "bun tools/serve.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "lab:score": "REPEAT=1 node lab/fit.mjs chart,dusk regular 0 && REPEAT=1 node lab/fit.mjs chart,dusk clear 0",
+    "voice": "bun tools/voice-check.ts"
+  },
+  "devDependencies": {
+    "@types/react": "19",
+    "@types/react-dom": "19",
+    "react": "19",
+    "react-dom": "19",
+    "typescript": "5",
+    "vue": "3"
+  }
+}

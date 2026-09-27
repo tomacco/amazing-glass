@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>amazing-glass</title>
+<meta name="description" content="Glass that bends the page behind it. Liquid glass web components for HTML, React and Vue, tuned pixel by pixel against Apple's own renderer.">
+<meta name="theme-color" content="#08090d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="amazing-glass.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<header class="hero" id="top">
+  <canvas class="hero-bg" aria-hidden="true"></canvas>
+  <nav class="nav wrap">
+    <span class="logo">amazing<span>-</span>glass</span>
+    <span class="nav-links">
+      <a href="guide/">Guide</a>
+      <a href="https://github.com/tomacco/amazing-glass">GitHub</a>
+    </span>
+  </nav>
+  <div class="hero-copy wrap">
+    <h1 class="hero-title" aria-label="Glass that bends the page behind it.">
+      <span>Glass that</span>
+      <span>bends the page</span>
+      <span>behind it.</span>
+    </h1>
+    <p class="hero-sub">Web components for plain HTML, React and Vue. We tuned them against Apple's own renderer until the average pixel was off by about 2 out of 255.</p>
+    <div class="hero-actions">
+      <ag-button variant="prominent" size="large" id="cta-proof">See the proof</ag-button>
+      <ag-button size="large" id="cta-code">Get the code</ag-button>
+    </div>
+  </div>
+  <div class="lens" id="lens" aria-hidden="true"><span class="lens-hint">drag me</span></div>
+</header>
+
+<main>
+  <section class="chapter" id="blur">
+    <div class="wrap chapter-head reveal">
+      <span class="kicker">01</span>
+      <h2>Blur is not glass.</h2>
+      <p>Most "glass" on the web is a blurred rectangle. Real glass has a thickness. Light hits the curved rim, bends, and drags the background along with it. Watch the stripes at the edges.</p>
+    </div>
+    <div class="marquee-stage reveal-y">
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee-row"><span>REFRACTION REFRACTION REFRACTION REFRACTION REFRACTION REFRACTION</span></div>
+        <div class="marquee-stripes"></div>
+        <div class="marquee-row alt"><span>BENDS BENDS BENDS BENDS BENDS BENDS BENDS BENDS BENDS BENDS</span></div>
+      </div>
+      <div class="versus wrap">
+        <figure class="vs-card">
+          <div class="fake-glass"></div>
+          <figcaption><code>backdrop-filter: blur(14px)</code><span>A frosted rectangle. Flat edges, no depth.</span></figcaption>
+        </figure>
+        <figure class="vs-card">
+          <ag-glass class="real-glass" variant="clear" params='{"blur":1.5,"bezel":0.45,"maxBezel":40,"depth":1.3,"dispersion":0.14}'></ag-glass>
+          <figcaption><code>&lt;ag-glass&gt;</code><span>A slab with a curved rim. The edge bends what is behind it.</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="physics">
+    <div class="wrap chapter-head reveal">
+      <span class="kicker">02</span>
+      <h2>Light bends at the edge.</h2>
+      <p>For every pixel we take the slope of the rim, bend the view ray with Snell's law, and store how far it moved. Chromium runs that map as a filter on whatever is behind the element. Three passes with slightly different strength, one per colour, give the thin rainbow at the rim.</p>
+    </div>
+    <div class="wrap physics-grid reveal-y">
+      <figure class="diagram">
+        <canvas id="rays" aria-label="Cross-section of the glass rim with view rays bending inward"></canvas>
+        <figcaption>Cross-section of the rim. Rays enter the curved edge and land further in. Thicker glass, bigger bend.</figcaption>
+      </figure>
+      <div class="playground">
+        <div class="play-stage"><canvas class="scene-canvas" data-scene="chart" aria-hidden="true"></canvas><div class="play-glass" id="play-glass"></div></div>
+        <div class="play-controls">
+          <ag-segmented id="play-variant" options="Regular,Clear,Lens" value="Clear"></ag-segmented>
+          <label><span>Thickness</span><ag-slider id="p-depth" min="0" max="2.4" step="0.01" value="1.2"></ag-slider></label>
+          <label><span>Rim width</span><ag-slider id="p-bezel" min="0.1" max="0.6" step="0.01" value="0.49"></ag-slider></label>
+          <label><span>Rainbow</span><ag-slider id="p-disp" min="0" max="0.4" step="0.01" value="0.08"></ag-slider></label>
+          <label><span>Frost</span><ag-slider id="p-blur" min="0" max="20" step="0.1" value="12"></ag-slider></label>
+          <p class="note">These are the real components. The sliders drive the same parameters you get in code.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="proof">
+    <div class="wrap chapter-head reveal">
+      <span class="kicker">03</span>
+      <h2>We checked our work against Apple's.</h2>
+      <p>A small SwiftUI app draws Apple's <code>.glassEffect</code> over the same pictures, at the same sizes. We screenshot both, compare every pixel, and let a search nudge our parameters until the difference stops shrinking. Drag the line.</p>
+    </div>
+    <div class="wrap reveal-y">
+      <div class="wipe" id="wipe">
+        <img class="wipe-web" alt="amazing-glass render of five glass shapes over a colour test card" src="assets/web-chart.jpg">
+        <div class="wipe-apple"><img alt="Apple's SwiftUI render of the same five glass shapes" src="assets/apple-chart.jpg"></div>
+        <div class="wipe-handle" role="slider" tabindex="0" aria-label="Comparison divider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span></span></div>
+        <span class="wipe-label left">Apple, SwiftUI</span>
+        <span class="wipe-label right">amazing-glass</span>
+      </div>
+      <div class="proof-row">
+        <ag-segmented id="wipe-scene" options="Test card,Dusk" value="Test card"></ag-segmented>
+        <div class="scores">
+          <div class="score"><b>Regular</b><div class="bar"><i style="--from:7.13;--to:2.09"></i></div><span><s>7.13</s> 2.09</span></div>
+          <div class="score"><b>Clear</b><div class="bar"><i style="--from:19.48;--to:2.33"></i></div><span><s>19.48</s> 2.33</span></div>
+        </div>
+      </div>
+      <p class="fine">Mean absolute error per colour channel, 0 to 255 scale, over each glass shape plus a 10 px margin, two scenes, macOS 27. The biggest surprise: Apple's Clear glass is frosted, about 12 px of blur. We had it at 1.6.</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="controls">
+    <div class="wrap chapter-head reveal">
+      <span class="kicker">04</span>
+      <h2>Controls that notice your finger.</h2>
+      <p>Knobs are solid at rest and turn into lenses while you hold them. Menus grow out of their buttons. Selections stretch on the way to where you tapped. Go on, touch everything.</p>
+    </div>
+    <div class="control-stage reveal-y">
+      <canvas class="control-bg" aria-hidden="true"></canvas>
+      <div class="control-grid wrap">
+        <ag-glass class="tile t-toggles" variant="regular">
+          <div class="row"><span>Wi-Fi</span><ag-switch checked></ag-switch></div>
+          <div class="row"><span>Low Power</span><ag-switch></ag-switch></div>
+          <div class="row"><span>Focus</span><ag-switch checked></ag-switch></div>
+        </ag-glass>
+        <ag-glass class="tile t-sliders" variant="regular">
+          <ag-slider value="62" min-icon="sunSmall" max-icon="sun"></ag-slider>
+          <ag-slider value="35" min-icon="speaker" max-icon="speaker"></ag-slider>
+        </ag-glass>
+        <div class="tile-bare t-seg"><ag-segmented options="Day,Week,Month,Year" value="Week"></ag-segmented></div>
+        <div class="tile-bare t-buttons">
+          <ag-button>Cancel</ag-button>
+          <ag-button variant="prominent">Done</ag-button>
+          <ag-button icon="plus" aria-label="Add"></ag-button>
+          <ag-menu label="More actions" id="demo-menu"></ag-menu>
+        </div>
+        <div class="tile-bare t-search"><ag-search placeholder="Search anything"></ag-search></div>
+        <div class="tile-bare t-toolbar">
+          <ag-toolbar>
+            <ag-toolbar-group><ag-button variant="plain" icon="chevronLeft" aria-label="Back"></ag-button></ag-toolbar-group>
+            <ag-toolbar-group><ag-button variant="plain" icon="heart" aria-label="Favourite"></ag-button><ag-button variant="plain" icon="share" aria-label="Share"></ag-button><ag-button variant="plain" icon="ellipsis" aria-label="More"></ag-button></ag-toolbar-group>
+          </ag-toolbar>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="app">
+    <div class="wrap app-row">
+      <div class="chapter-head reveal">
+        <span class="kicker">05</span>
+        <h2>Looks right in an actual app.</h2>
+        <p>Scroll the feed and the tab bar shrinks to get out of the way. Drag across it and the selection follows as a lens. Tap an album and a sheet floats up, inset so the content peeks around it. Pull it up and it goes flush and more opaque.</p>
+        <p class="fine">Corners are concentric. The sheet sits 8 px inside a 55 px device corner, so its corner is 47 px.</p>
+      </div>
+      <div class="phone reveal-y" id="phone">
+        <div class="phone-status"><span>9:41</span><span class="dots">●●●</span></div>
+        <div class="phone-scroll" id="feed">
+          <div class="phone-content">
+            <div class="phone-title">Listen Now</div>
+            <div class="albums" id="albums"></div>
+          </div>
+        </div>
+        <div class="phone-edge"></div>
+        <div class="phone-top">
+          <ag-button icon="chevronLeft" aria-label="Back"></ag-button>
+          <ag-menu label="Playlist actions" id="phone-menu"></ag-menu>
+        </div>
+        <div class="phone-tabs"><ag-tab-bar id="tabs" search minimize-on-scroll="#feed"></ag-tab-bar></div>
+        <ag-sheet id="sheet" detent="closed">
+          <div class="np-title" id="np-title">Now Playing</div>
+          <div class="np-artist" id="np-artist">Pick an album</div>
+          <ag-slider value="38"></ag-slider>
+          <div class="np-buttons"><ag-button icon="play" size="large" aria-label="Play"></ag-button><ag-button icon="forward" size="large" aria-label="Next"></ag-button></div>
+          <ag-slider value="70" min-icon="speaker" max-icon="speaker"></ag-slider>
+        </ag-sheet>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="liquid">
+    <div class="wrap chapter-head reveal">
+      <span class="kicker">06</span>
+      <h2>Two drops, one glass.</h2>
+      <p>Bring glass shapes close and they melt into one surface, with one rim and one refraction. Move your pointer over it.</p>
+    </div>
+    <div class="liquid-stage reveal-y" id="liquid-stage">
+      <canvas class="scene-canvas" data-scene="dusk" aria-hidden="true"></canvas>
+      <div class="liquid-field" id="liquid-field"></div>
+    </div>
+  </section>
+
+  <section class="chapter" id="use">
+    <div class="wrap chapter-head reveal">
+      <span class="kicker">07</span>
+      <h2>Two lines to try it.</h2>
+      <p>One CSS file, one script. Every element works in any framework. React and Vue get typed wrappers with the usual props, events and <code>v-model</code>.</p>
+    </div>
+    <div class="wrap code-box reveal-y">
+      <div class="code-bar">
+        <ag-segmented id="code-tabs" options="HTML,React,Vue" value="HTML"></ag-segmented>
+        <ag-button size="small" id="copy">Copy</ag-button>
+      </div>
+      <pre id="code"><code></code></pre>
+    </div>
+  </section>
+</main>
+
+<footer class="footer wrap">
+  <p><b>Where it works.</b> Full refraction runs in Chrome, Edge, Arc, Brave and other Chromium browsers. Safari and Firefox do not run SVG filters inside <code>backdrop-filter</code>, so there you get frost, tint and rim light, plus real refraction over canvases the page painted itself.</p>
+  <p><b>Whose idea.</b> Liquid Glass is Apple's design language, and their Human Interface Guidelines are the reference for every control here. This project is independent and not affiliated with Apple. Icons are our own drawings.</p>
+  <p class="footer-links"><a href="guide/">Technical guide</a> · <a href="https://github.com/tomacco/amazing-glass">Source on GitHub</a> · MIT licence</p>
+</footer>
+
+<div class="engine-note" id="engine-note" hidden>This browser skips the refraction filter, so you are seeing the fallback. Chromium shows the full effect.</div>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

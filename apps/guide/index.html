@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>amazing-glass guide</title>
+<meta name="description" content="Technical guide for amazing-glass: every component live, with attributes, properties, events and material parameters.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="amazing-glass.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <a class="brand" href="../">amazing<span>-</span>glass</a>
+    <nav id="toc" aria-label="Sections"></nav>
+  </aside>
+  <main class="content">
+    <header class="intro" id="intro">
+      <p class="eyebrow">Technical guide</p>
+      <h1>Every piece, live.</h1>
+      <p class="lede">Each component below is the real element running on this page. Under each one: the markup, and every attribute, property and event it has. The same reference lives in <a href="https://github.com/tomacco/amazing-glass/blob/main/docs/API.md">docs/API.md</a>.</p>
+      <p class="notice" id="engine-notice" hidden><strong>Fallback mode.</strong> This browser does not run SVG filters inside backdrop-filter. Glass over the painted scenes still refracts (computed on the CPU); glass over page content shows frost, tint and rim light. Chromium browsers show everything.</p>
+    </header>
+
+    <section id="install">
+      <h2>Install</h2>
+      <div class="cols">
+        <div><h3>From a CDN</h3><pre><code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/tomacco/amazing-glass@main/dist/amazing-glass.css"&gt;
+&lt;script type="module" src="https://cdn.jsdelivr.net/gh/tomacco/amazing-glass@main/dist/amazing-glass.min.js"&gt;&lt;/script&gt;</code></pre></div>
+        <div><h3>From GitHub with npm</h3><pre><code>npm i github:tomacco/amazing-glass
+
+import 'amazing-glass/styles.css';
+import 'amazing-glass';            // defines every &lt;ag-*&gt; element
+import { Switch } from 'amazing-glass/react';
+import { Switch } from 'amazing-glass/vue';</code></pre></div>
+      </div>
+    </section>
+
+    <section id="material">
+      <h2>The material</h2>
+      <p>Drag the glass. Switch the preset and the scene. Regular frosts for legibility, clear keeps content visible, lens magnifies and is what knobs turn into.</p>
+      <div class="stage hero-stage" id="hero"><canvas class="scene"></canvas><div class="probe" id="probe"><span>Drag me</span></div></div>
+      <div class="controls">
+        <ag-segmented id="variant" options="Regular,Clear,Lens" value="Clear"></ag-segmented>
+        <ag-segmented id="scene-pick" options="Dusk,Bloom,Citrus,Test card" value="Dusk"></ag-segmented>
+        <label>Dim for bright media <ag-switch id="dim"></ag-switch></label>
+      </div>
+      <h3>Parameters</h3>
+      <p>Pass any of these as <code>params</code> (JSON attribute, React or Vue prop) or through <code>glass.setParams()</code>.</p>
+      <div class="table" id="params-table"></div>
+    </section>
+
+    <section id="components">
+      <h2>Components</h2>
+      <div id="component-list"></div>
+    </section>
+
+    <section id="measured">
+      <h2>Measured against Apple</h2>
+      <p>The regular and clear presets were fitted against SwiftUI's <code>.glassEffect</code> on macOS 27, rendered over the same images at the same geometry. Mean error per colour channel on a 0 to 255 scale: regular 7.13 before fitting, 2.09 after; clear 19.48 before, 2.33 after. Left Apple, right amazing-glass.</p>
+      <div class="pair"><img src="../assets/apple-chart.jpg" alt="Apple's glass over the test card"><img src="../assets/web-chart.jpg" alt="amazing-glass over the test card"></div>
+      <div class="pair"><img src="../assets/apple-dusk.jpg" alt="Apple's glass over the dusk scene"><img src="../assets/web-dusk.jpg" alt="amazing-glass over the dusk scene"></div>
+      <p class="muted">The rig is in <code>lab/</code>: a SwiftUI reference renderer and a fitter. Limits: macOS glass, not iOS; lens knobs and dark mode are not measured yet.</p>
+    </section>
+
+    <section id="tokens">
+      <h2>Tokens</h2>
+      <p>Override any of these on <code>:root</code> or on one element. Colours are the iOS 26 system palette and switch with the colour scheme.</p>
+      <div class="swatches" id="swatches"></div>
+      <h3>Text styles</h3>
+      <div class="type-scale" id="type-scale"></div>
+    </section>
+
+    <section id="support">
+      <h2>Browser support</h2>
+      <div class="table"><table>
+        <thead><tr><th>Browser</th><th>Refraction over page content</th><th>Refraction over registered canvases</th><th>Frost, tint, rim</th></tr></thead>
+        <tbody>
+          <tr><td>Chrome, Edge, Arc, Brave, Opera</td><td>Yes (SVG backdrop filter)</td><td>Yes</td><td>Yes</td></tr>
+          <tr><td>Safari</td><td>No</td><td>Yes (CPU)</td><td>Yes</td></tr>
+          <tr><td>Firefox</td><td>No</td><td>Yes (CPU)</td><td>Yes</td></tr>
+        </tbody></table></div>
+      <p class="muted">Respects <code>prefers-reduced-motion</code>, <code>prefers-reduced-transparency</code> and <code>prefers-contrast</code>. Force the fallback anywhere with <code>?ag-fallback</code> in the URL.</p>
+    </section>
+  </main>
+</div>
+<script type="module" src="main.js"></script>
+</body>
+</html>

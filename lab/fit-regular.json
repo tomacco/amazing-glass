@@ -1,0 +1,33 @@
+{
+  "scene": "chart,dusk",
+  "variant": "regular",
+  "loss": 2.08575,
+  "regions": {
+    "chart": {
+      "regCap": 2.855,
+      "regRect": 1.658
+    },
+    "dusk": {
+      "regCap": 2.128,
+      "regRect": 1.702
+    }
+  },
+  "params": {
+    "blur": 10.3505,
+    "saturate": 2.2523,
+    "bezel": 0.4213,
+    "maxBezel": 30.629,
+    "depth": 1.1875,
+    "dispersion": 0,
+    "rim": 0.6585,
+    "shade": 0.03,
+    "rimWidth": 0.3,
+    "tr": 255,
+    "tg": 255,
+    "tb": 255,
+    "ta": 0.4959,
+    "sa": 0,
+    "lum": 0.9905,
+    "contrast": 0.8131
+  }
+}

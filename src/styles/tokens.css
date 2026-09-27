@@ -1,0 +1,110 @@
+/*
+ * amazing-glass tokens. Override any of these on :root or on a single element.
+ * Colours follow the iOS 26 system palette (transcribed: the HIG publishes it as images).
+ * Glass tints marked "fitted" were measured against SwiftUI's .glassEffect on macOS 27.
+ */
+:root {
+  /* System colours, light */
+  --ag-red: #ff383c;    --ag-orange: #ff8d28; --ag-yellow: #ffcc00;
+  --ag-green: #34c759;  --ag-mint: #00c8b3;   --ag-teal: #00c3d0;
+  --ag-cyan: #00c0e8;   --ag-blue: #0088ff;   --ag-indigo: #6155f5;
+  --ag-purple: #cb30e0; --ag-pink: #ff2d55;   --ag-brown: #ac7f5e;
+
+  --ag-gray: #8e8e93;  --ag-gray2: #aeaeb2; --ag-gray3: #c7c7cc;
+  --ag-gray4: #d1d1d6; --ag-gray5: #e5e5ea; --ag-gray6: #f2f2f7;
+
+  /* Semantic label and fill levels (vibrancy hierarchy: default > secondary > tertiary > quaternary) */
+  --ag-label: #000;
+  --ag-label-2: rgb(60 60 67 / 0.6);
+  --ag-label-3: rgb(60 60 67 / 0.3);
+  --ag-label-4: rgb(60 60 67 / 0.18);
+  --ag-fill: rgb(120 120 128 / 0.2);
+  --ag-fill-2: rgb(120 120 128 / 0.16);
+  --ag-fill-3: rgb(118 118 128 / 0.12);
+  --ag-separator: rgb(60 60 67 / 0.29);
+  --ag-bg: #fff;
+  --ag-bg-2: #f2f2f7;
+  --ag-bg-grouped: #f2f2f7;
+  --ag-bg-grouped-2: #fff;
+
+  --ag-accent: var(--ag-blue);
+  --ag-seg-selected: #fff;
+
+  /* Glass tint per tone. Light glass lightens, dark glass darkens. */
+  --ag-glass-regular-light: rgb(255 255 255 / 0.496); /* fitted */
+  --ag-glass-regular-dark: rgb(30 30 34 / 0.36);
+  --ag-glass-shadow: none; /* fitted: .glassEffect casts no measurable shadow */
+  --ag-glass-clear: rgb(255 249 255 / 0.235); /* fitted */
+
+  /* Typography: iOS Dynamic Type, default (Large) size */
+  --ag-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ag-font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --ag-font-rounded: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, sans-serif;
+  --ag-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Radii. Controls are capsules; containers follow concentricity:
+     inner radius = outer radius - padding. */
+  --ag-radius-device: 55px;
+  --ag-radius-sheet: 38px;
+  --ag-radius-card: 26px;
+  --ag-radius-row: 26px;
+
+  /* Motion. Springs approximated with linear() easing. */
+  --ag-spring: linear(0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017 19.4%, 1.061 22.2%, 1.078 25.3%, 1.066 29.2%, 1.018 38.3%, 0.996 45.2%, 0.993 52.3%, 1);
+  --ag-spring-soft: linear(0, 0.06 3%, 0.5 12%, 0.86 22%, 1.02 32%, 1.035 38%, 1.01 52%, 1);
+  --ag-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ag-red: #ff4245;    --ag-orange: #ff9230; --ag-yellow: #ffd600;
+    --ag-green: #30d158;  --ag-mint: #00dac3;   --ag-teal: #00d2e0;
+    --ag-cyan: #3cd3fe;   --ag-blue: #0091ff;   --ag-indigo: #6d7cff;
+    --ag-purple: #db34f2; --ag-pink: #ff375f;   --ag-brown: #b78a66;
+    --ag-gray: #8e8e93;  --ag-gray2: #636366; --ag-gray3: #48484a;
+    --ag-gray4: #3a3a3c; --ag-gray5: #2c2c2e; --ag-gray6: #1c1c1e;
+    --ag-label: #fff;
+    --ag-label-2: rgb(235 235 245 / 0.6);
+    --ag-label-3: rgb(235 235 245 / 0.3);
+    --ag-label-4: rgb(235 235 245 / 0.16);
+    --ag-fill: rgb(120 120 128 / 0.36);
+    --ag-fill-2: rgb(120 120 128 / 0.32);
+    --ag-fill-3: rgb(118 118 128 / 0.24);
+    --ag-separator: rgb(84 84 88 / 0.6);
+    --ag-bg: #000; --ag-bg-2: #1c1c1e;
+    --ag-bg-grouped: #000; --ag-bg-grouped-2: #1c1c1e;
+    --ag-seg-selected: #636366;
+  }
+}
+:root[data-theme="dark"] {
+  --ag-red: #ff4245;    --ag-orange: #ff9230; --ag-yellow: #ffd600;
+  --ag-green: #30d158;  --ag-mint: #00dac3;   --ag-teal: #00d2e0;
+  --ag-cyan: #3cd3fe;   --ag-blue: #0091ff;   --ag-indigo: #6d7cff;
+  --ag-purple: #db34f2; --ag-pink: #ff375f;   --ag-brown: #b78a66;
+  --ag-gray: #8e8e93;  --ag-gray2: #636366; --ag-gray3: #48484a;
+  --ag-gray4: #3a3a3c; --ag-gray5: #2c2c2e; --ag-gray6: #1c1c1e;
+  --ag-label: #fff;
+  --ag-label-2: rgb(235 235 245 / 0.6);
+  --ag-label-3: rgb(235 235 245 / 0.3);
+  --ag-label-4: rgb(235 235 245 / 0.16);
+  --ag-fill: rgb(120 120 128 / 0.36);
+  --ag-fill-2: rgb(120 120 128 / 0.32);
+  --ag-fill-3: rgb(118 118 128 / 0.24);
+  --ag-separator: rgb(84 84 88 / 0.6);
+  --ag-bg: #000; --ag-bg-2: #1c1c1e;
+  --ag-bg-grouped: #000; --ag-bg-grouped-2: #1c1c1e;
+  --ag-seg-selected: #636366;
+}
+
+/* Text styles */
+.ag-large-title { font: 700 34px/41px var(--ag-font-display); letter-spacing: 0.4px; }
+.ag-title-1 { font: 700 28px/34px var(--ag-font-display); letter-spacing: 0.38px; }
+.ag-title-2 { font: 700 22px/28px var(--ag-font-display); letter-spacing: -0.26px; }
+.ag-title-3 { font: 600 20px/25px var(--ag-font-display); letter-spacing: -0.45px; }
+.ag-headline { font: 600 17px/22px var(--ag-font); letter-spacing: -0.43px; }
+.ag-body { font: 400 17px/22px var(--ag-font); letter-spacing: -0.43px; }
+.ag-callout { font: 400 16px/21px var(--ag-font); letter-spacing: -0.31px; }
+.ag-subhead { font: 400 15px/20px var(--ag-font); letter-spacing: -0.23px; }
+.ag-footnote { font: 400 13px/18px var(--ag-font); letter-spacing: -0.08px; }
+.ag-caption-1 { font: 400 12px/16px var(--ag-font); }
+.ag-caption-2 { font: 400 11px/13px var(--ag-font); letter-spacing: 0.06px; }

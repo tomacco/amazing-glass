@@ -1,0 +1,85 @@
+/* Guide: a quiet reference layout. Light and dark follow the system. */
+:root {
+  --page: #f3f4f7; --panel: #ffffff; --ink: #16181d; --ink-2: #5b606b; --ink-3: #8a8f99;
+  --rule: rgb(22 24 29 / 0.1); --blue: #0a6cff; --stage-plain: #e6e8ee;
+  --display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --body: "Geist", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --page: #0b0c10; --panel: #15171d; --ink: #f2f3f5; --ink-2: #a5aab4; --ink-3: #737883; --rule: rgb(242 243 245 / 0.1); --blue: #5aa2ff; --stage-plain: #1b1d24; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 400 16px/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+a { color: var(--blue); }
+code { font: 500 0.88em var(--mono); }
+pre { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 16px; padding: 16px 18px; overflow-x: auto; font: 400 13.5px/1.65 var(--mono); }
+pre code { font: inherit; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; }
+h1 { font-weight: 800; font-size: clamp(40px, 6vw, 64px); line-height: 1; letter-spacing: -0.03em; margin: 8px 0 16px; }
+h2 { font-weight: 800; font-size: 34px; letter-spacing: -0.02em; margin: 0 0 12px; }
+h3 { font-weight: 700; font-size: 21px; margin: 26px 0 8px; }
+h4 { font: 600 13px/1 var(--body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); margin: 22px 0 8px; }
+p { max-width: 68ch; }
+.muted { color: var(--ink-3); font-size: 14px; }
+
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); max-width: 1320px; margin: 0 auto; }
+.side { position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 28px 20px; border-right: 1px solid var(--rule); }
+.brand { display: block; font: 800 20px/1 var(--display); color: var(--ink); text-decoration: none; letter-spacing: -0.03em; margin-bottom: 26px; }
+.brand span { color: var(--blue); }
+#toc { display: grid; gap: 2px; }
+#toc a { color: var(--ink-2); text-decoration: none; font-size: 14px; padding: 5px 10px; border-radius: 8px; }
+#toc a.sub { font: 400 13px var(--mono); padding-left: 20px; }
+#toc a:hover { background: var(--panel); color: var(--ink); }
+.content { padding: 40px clamp(16px, 4vw, 56px) 100px; min-width: 0; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .side { display: none; } }
+section { padding-block: 40px; border-top: 1px solid var(--rule); }
+.intro { padding-bottom: 30px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--blue); margin: 0; }
+.lede { font-size: 18px; color: var(--ink-2); }
+.notice { background: rgb(255 141 40 / 0.14); border-radius: 14px; padding: 12px 16px; font-size: 14px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+
+.stage { position: relative; overflow: hidden; isolation: isolate; border-radius: 22px; background: #1b1d3a; min-height: 180px; display: grid; place-items: center; padding: 28px 18px; margin: 14px 0; }
+.stage.plain { background: var(--stage-plain); }
+.stage.tall { min-height: 320px; align-items: start; justify-items: end; }
+.stage > canvas.scene { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; display: block; }
+.live { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: center; }
+.stage.tall .live { align-items: flex-start; }
+#ag-sheet .stage { padding: 0; }
+#ag-sheet .live { position: absolute; inset: 0; }
+#ag-glass .live ag-glass { color: inherit; }
+.hero-stage { height: 440px; display: block; padding: 0; }
+.probe { position: absolute; width: 240px; height: 132px; border-radius: 66px; cursor: grab; display: grid; place-items: center; font: 600 17px var(--ag-font); touch-action: none; }
+.probe span { pointer-events: none; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; }
+.controls label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink-2); }
+
+.component { padding-block: 28px; border-top: 1px dashed var(--rule); }
+.component:first-child { border-top: 0; }
+.component-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.component-head h3 { margin: 0; font-family: var(--mono); font-size: 20px; }
+.react-name { font-size: 13px; color: var(--ink-3); }
+
+.table { overflow-x: auto; background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; }
+.table table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 14px; }
+.table th, .table td { text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.table th { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.table tr:last-child td { border-bottom: 0; }
+.table td:first-child { white-space: nowrap; }
+
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.pair img { width: 100%; border-radius: 12px; display: block; }
+@media (max-width: 700px) { .pair { grid-template-columns: 1fr; } }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.sw { background: var(--panel); border-radius: 14px; overflow: hidden; font-size: 12px; border: 1px solid var(--rule); }
+.sw i { display: block; height: 48px; }
+.sw div { padding: 8px 10px; display: grid; }
+.sw code { color: var(--ink-3); }
+.type-scale { background: var(--panel); border: 1px solid var(--rule); border-radius: 16px; padding: 16px; overflow-x: auto; display: grid; gap: 6px; color: var(--ink); }
+.type-scale div { display: grid; grid-template-columns: 130px 1fr 70px; gap: 12px; align-items: baseline; min-width: 560px; }
+.type-scale small { font: 400 12px var(--mono); color: var(--ink-3); }
+.type-scale code { color: var(--ink-3); text-align: right; font-size: 12px; }
+:focus-visible { outline-color: var(--blue); }

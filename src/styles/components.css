@@ -1,0 +1,173 @@
+/* Component styles. Metrics follow iOS 26 controls where the HIG or the system gives them.
+   Every element reads its colours from the tokens, so theming is a matter of overriding
+   --ag-accent, --ag-green, --ag-fill and friends. */
+
+.ag-icon { display: block; flex: none; }
+
+/* ------------------------------------------------ Glass surface */
+ag-glass { display: block; border-radius: var(--ag-radius, 28px); }
+
+/* ------------------------------------------------ Button */
+ag-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: var(--ag-button-height, 48px); padding: 0 22px; border-radius: 999px;
+  font: 600 17px/1 var(--ag-font); letter-spacing: -0.43px; white-space: nowrap;
+  cursor: pointer; user-select: none; -webkit-user-select: none; outline: none;
+  transition: transform 0.45s var(--ag-spring);
+}
+ag-button[size="small"] { --ag-button-height: 36px; padding: 0 14px; font-size: 15px; }
+ag-button[size="large"] { --ag-button-height: 56px; padding: 0 26px; }
+ag-button[data-icon-only] { width: var(--ag-button-height, 48px); padding: 0; }
+ag-button .ag-button-icon { display: contents; }
+ag-button .ag-button-icon[hidden] { display: none; }
+/* Buttons come to life when touched: they swell and brighten. */
+ag-button:active { transform: scale(1.08); }
+ag-button:active > .ag-refract { background-color: color-mix(in srgb, var(--ag-tint), white 18%); }
+ag-button:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ag-accent) 55%, transparent); }
+ag-button[variant="plain"] { color: inherit; height: 44px; min-width: 44px; padding: 0 10px; border-radius: 22px; }
+ag-button[variant="plain"][data-icon-only] { width: 44px; padding: 0; }
+ag-button[variant="plain"]:hover { background: rgb(120 120 128 / 0.12); }
+ag-button[variant="plain"]:active { transform: scale(1.1); }
+
+/* ------------------------------------------------ Switch: 64 x 28 track, pill knob */
+ag-switch { display: inline-block; width: 64px; height: 28px; cursor: pointer; touch-action: pan-y; outline: none; vertical-align: middle; }
+ag-switch[disabled] { opacity: 0.4; cursor: default; }
+.ag-switch-track { position: relative; display: block; width: 100%; height: 100%; border-radius: 14px; background: var(--ag-fill); transition: background-color 0.3s var(--ag-ease); }
+ag-switch[checked] .ag-switch-track, ag-switch.ag-drag-on .ag-switch-track { background: var(--ag-switch-on, var(--ag-green)); }
+ag-switch.ag-active:not(.ag-drag-on) .ag-switch-track { background: var(--ag-fill); }
+.ag-switch-knob {
+  --x: 0px;
+  position: absolute; left: 2px; top: 2px; width: 38px; height: 24px; border-radius: 12px;
+  transform: translateX(var(--x));
+  --ag-shadow: 0 3px 8px rgb(0 0 0 / 0.15), 0 0.5px 1px rgb(0 0 0 / 0.12);
+  transition: transform 0.5s var(--ag-spring), width 0.35s var(--ag-spring), height 0.35s var(--ag-spring), left 0.35s var(--ag-spring), top 0.35s var(--ag-spring);
+}
+ag-switch[checked] .ag-switch-knob { --x: 22px; }
+/* Touched: the knob lifts off the track as a lens bigger than the track. */
+ag-switch.ag-active .ag-switch-knob { width: 56px; height: 38px; top: -5px; left: -7px; border-radius: 19px; }
+ag-switch:focus-visible .ag-switch-track { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ag-accent) 55%, transparent); }
+
+/* ------------------------------------------------ Slider */
+ag-slider { --ag-fraction: 0.5; display: flex; align-items: center; gap: 12px; min-width: 140px; color: var(--ag-label-2); outline: none; }
+ag-slider[disabled] { opacity: 0.4; }
+.ag-slider-rail { position: relative; flex: 1; height: 28px; touch-action: pan-y; cursor: pointer; }
+.ag-slider-rail::before, .ag-slider-fill { content: ""; position: absolute; left: 0; top: 11px; height: 6px; border-radius: 3px; }
+.ag-slider-rail::before { right: 0; background: var(--ag-fill); }
+.ag-slider-fill { width: calc(var(--ag-fraction) * 100%); background: var(--ag-slider-fill, var(--ag-accent)); }
+.ag-slider-thumb {
+  position: absolute; top: 2px; width: 38px; height: 24px; border-radius: 12px; left: calc(var(--ag-fraction) * (100% - 38px));
+  --ag-shadow: 0 3px 8px rgb(0 0 0 / 0.15), 0 0.5px 1px rgb(0 0 0 / 0.12);
+  transition: width 0.35s var(--ag-spring), height 0.35s var(--ag-spring), top 0.35s var(--ag-spring), margin 0.35s var(--ag-spring);
+}
+ag-slider.ag-active .ag-slider-thumb { width: 58px; height: 40px; top: -6px; margin-left: -10px; border-radius: 20px; }
+ag-slider:focus-visible .ag-slider-thumb { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ag-accent) 55%, transparent); }
+.ag-slider-icon { display: grid; place-items: center; }
+
+/* ------------------------------------------------ Segmented control */
+ag-segmented { position: relative; display: inline-flex; height: 36px; padding: 2px; border-radius: 18px; background: var(--ag-fill-3); touch-action: pan-y; }
+.ag-segmented-item {
+  position: relative; z-index: 1; flex: 1 1 0; min-width: 72px; padding: 0 14px; border: 0; background: none; border-radius: 16px;
+  font: 500 14px/1 var(--ag-font); color: var(--ag-label); cursor: pointer; white-space: nowrap;
+}
+.ag-segmented-item[aria-selected="true"] { font-weight: 600; }
+.ag-segmented-item:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: -2px; }
+.ag-segmented-pill {
+  position: absolute; top: 2px; height: 32px; border-radius: 16px; z-index: 0;
+  --ag-shadow: 0 3px 8px rgb(0 0 0 / 0.12), 0 0.5px 1px rgb(0 0 0 / 0.1);
+  transition: left 0.5s var(--ag-spring), width 0.4s var(--ag-spring), top 0.3s var(--ag-spring), height 0.3s var(--ag-spring);
+}
+.ag-segmented-pill[data-solid] { --ag-tint: var(--ag-seg-selected); }
+ag-segmented.ag-active .ag-segmented-pill { top: -5px; height: 46px; border-radius: 23px; }
+
+/* ------------------------------------------------ Tab bar */
+ag-tab-bar { display: flex; align-items: center; gap: 10px; }
+.ag-tab-bar-bar { position: relative; display: flex; flex: 1; height: 62px; padding: 4px; border-radius: 31px; touch-action: pan-y; }
+ag-tab-bar.ag-minimized .ag-tab-bar-bar { flex: 0 0 auto; }
+ag-tab-bar.ag-minimized .ag-tab-search { margin-left: auto; }
+.ag-tab {
+  position: relative; z-index: 1; flex: 1 1 0; min-width: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 0; background: none; border-radius: 27px; color: inherit; cursor: pointer;
+  font: 500 10px/1.1 var(--ag-font); letter-spacing: 0.1px; transition: color 0.2s;
+}
+.ag-tab[hidden] { display: none; }
+.ag-tab[aria-selected="true"], .ag-tab.ag-under { color: var(--ag-accent); }
+ag-tab-bar.ag-active .ag-tab[aria-selected="true"]:not(.ag-under) { color: inherit; }
+.ag-tab:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: -3px; }
+.ag-tab-pill {
+  position: absolute; top: 4px; height: 54px; border-radius: 27px; z-index: 0; --ag-shadow: none;
+  transition: left 0.5s var(--ag-spring), width 0.4s var(--ag-spring), top 0.3s var(--ag-spring), height 0.3s var(--ag-spring);
+}
+.ag-tab-pill[data-solid] { --ag-tint: rgb(120 120 128 / 0.16); }
+.ag-tab-pill[data-solid] > .ag-refract { background-image: none !important; }
+.ag-tab-bar-bar[data-tone="dark"] .ag-tab-pill[data-solid] { --ag-tint: rgb(255 255 255 / 0.14); }
+ag-tab-bar.ag-active .ag-tab-pill { top: -6px; height: 74px; border-radius: 37px; --ag-shadow: 0 8px 24px rgb(0 0 0 / 0.18); }
+.ag-tab-search { --ag-button-height: 62px; flex: none; }
+
+/* ------------------------------------------------ Menu */
+ag-menu { position: relative; display: inline-block; width: 48px; height: 48px; }
+.ag-menu-surface { position: absolute; top: 0; right: 0; width: 48px; height: 48px; border-radius: 24px; overflow: hidden; z-index: 10; }
+ag-menu[align="start"] .ag-menu-surface, ag-menu.ag-flip .ag-menu-surface { right: auto; left: 0; }
+.ag-menu-trigger {
+  position: absolute; top: 0; right: 0; width: 48px; height: 48px; display: grid; place-items: center;
+  border: 0; background: none; color: inherit; cursor: pointer; border-radius: 24px;
+}
+ag-menu[align="start"] .ag-menu-trigger, ag-menu.ag-flip .ag-menu-trigger { right: auto; left: 0; }
+.ag-menu-trigger:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: -3px; }
+.ag-menu-list { display: none; }
+ag-menu.ag-open .ag-menu-surface { width: var(--ag-menu-width, 250px); height: auto; border-radius: 28px; }
+ag-menu.ag-open .ag-menu-trigger { display: none; }
+ag-menu.ag-open .ag-menu-list { display: flex; flex-direction: column; padding: 8px; }
+.ag-menu-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 44px; padding: 0 14px;
+  border: 0; background: none; border-radius: 20px; color: inherit; cursor: pointer; text-align: left;
+  font: 400 17px/1 var(--ag-font); letter-spacing: -0.43px;
+}
+.ag-menu-item:hover, .ag-menu-item:focus-visible { background: rgb(120 120 128 / 0.16); outline: none; }
+.ag-menu-item.ag-destructive { color: var(--ag-red); }
+.ag-menu-separator { border: 0; height: 1px; margin: 6px 14px; background: var(--ag-separator); }
+
+/* ------------------------------------------------ Sheet */
+ag-sheet {
+  position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 20; height: var(--ag-sheet-medium, 46%);
+  display: flex; flex-direction: column; padding: 10px 20px 20px; overflow: auto;
+  border-radius: var(--ag-sheet-radius, 47px);
+  transition: height 0.55s var(--ag-spring), left 0.45s var(--ag-ease), right 0.45s var(--ag-ease), bottom 0.45s var(--ag-ease), border-radius 0.45s var(--ag-ease), transform 0.5s var(--ag-ease);
+}
+ag-sheet[detent="closed"], ag-sheet:not([detent]) { transform: translateY(110%); pointer-events: none; }
+/* Large: flush with the display edges, top corners stay round, more opaque to hold focus. */
+ag-sheet[detent="large"] {
+  left: 0; right: 0; bottom: 0; height: calc(100% - var(--ag-sheet-top, 54px));
+  border-radius: var(--ag-sheet-radius, 47px) var(--ag-sheet-radius, 47px) 0 0;
+}
+/* Specificity note: glass tint rules are (0,3,0) with tone; overrides here must outrank them. */
+ag-sheet.ag-glass[detent="large"][data-variant] { --ag-tint: color-mix(in srgb, var(--ag-bg-grouped-2) 86%, transparent); --ag-ink: var(--ag-label); }
+.ag-sheet-grabber {
+  flex: none; display: block; width: 36px; height: 5px; margin: 0 auto 10px; padding: 0; border: 0; border-radius: 3px;
+  background: var(--ag-label-3); cursor: grab; touch-action: none; box-shadow: 0 0 0 12px transparent;
+}
+
+/* ------------------------------------------------ Alert */
+ag-alert { display: block; width: 300px; max-width: 100%; padding: 22px 18px 18px; border-radius: 34px; }
+.ag-alert-heading { font: 600 17px/22px var(--ag-font); letter-spacing: -0.43px; padding: 0 6px; }
+.ag-alert-message { font: 400 15px/20px var(--ag-font); letter-spacing: -0.23px; padding: 4px 6px 0; opacity: 0.8; }
+.ag-alert-actions { display: flex; gap: 10px; margin-top: 18px; }
+.ag-alert-actions ag-button { flex: 1; }
+.ag-alert-actions ag-button.ag-alert-cancel[data-variant][data-tone] { --ag-tint: rgb(120 120 128 / 0.16); }
+.ag-alert-actions ag-button.ag-alert-cancel[data-variant]:not([data-tone]) { --ag-tint: rgb(120 120 128 / 0.16); }
+
+/* ------------------------------------------------ Search */
+ag-search { display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 16px; border-radius: 24px; }
+ag-search input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: inherit; font: 400 17px/1 var(--ag-font); letter-spacing: -0.43px; }
+ag-search input::placeholder { color: currentColor; opacity: 0.55; }
+ag-search input::-webkit-search-cancel-button { filter: grayscale(1); }
+.ag-search-icon { display: grid; opacity: 0.6; }
+ag-search:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ag-accent) 45%, transparent); }
+
+/* ------------------------------------------------ Toolbar */
+ag-toolbar { display: flex; align-items: center; gap: 10px; }
+ag-toolbar[spread] { justify-content: space-between; }
+ag-toolbar-group { display: flex; align-items: center; height: 48px; padding: 0 2px; border-radius: 24px; }
+
+@media (prefers-reduced-motion: reduce) {
+  ag-button, .ag-switch-knob, .ag-slider-thumb, .ag-segmented-pill, .ag-tab-pill, ag-sheet { transition-duration: 0.01s !important; }
+}

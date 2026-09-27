@@ -1,0 +1,51 @@
+/* The material. Pairs with the Glass class in amazing-glass/core.
+   Base rules sit in :where() so they have zero specificity: any layout you or a component
+   write for the same element (position, shadow, colour) wins without a fight. */
+:where(.ag-glass) {
+  position: relative;
+  isolation: isolate;
+  color: var(--ag-ink, inherit);
+  box-shadow: var(--ag-shadow, var(--ag-glass-shadow));
+}
+/* One layer carries everything: backdrop filter (refraction, frost), background colour
+   (tint), background image (rim light). Keep it the first child. */
+.ag-glass > .ag-refract {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background-color: var(--ag-tint);
+  background-size: 100% 100%;
+  transition: background-color 0.4s var(--ag-ease);
+}
+/* CPU refraction (browsers without SVG backdrop filters) sits under the frost layer. */
+.ag-glass > .ag-cpu {
+  position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%;
+  border-radius: inherit; pointer-events: none;
+}
+
+.ag-glass[data-variant="regular"] { --ag-tint: var(--ag-glass-regular-light); --ag-ink: #000; }
+.ag-glass[data-variant="regular"][data-tone="dark"] { --ag-tint: var(--ag-glass-regular-dark); --ag-ink: #fff; }
+.ag-glass[data-variant="clear"] { --ag-tint: var(--ag-glass-clear); --ag-ink: #000; }
+.ag-glass[data-variant="clear"][data-tone="dark"] { --ag-ink: #fff; }
+/* HIG: over bright media, clear glass gets a 35% dark dimming layer. */
+.ag-glass[data-variant="clear"][dim] { --ag-tint: rgb(0 0 0 / 0.35); --ag-ink: #fff; }
+.ag-glass[data-variant="lens"] { --ag-tint: rgb(255 255 255 / 0.1); --ag-shadow: 0 6px 20px rgb(0 0 0 / 0.16); }
+/* Stained glass: colour lives in the material. Set with the tint attribute or --ag-stain. */
+.ag-glass[data-stained][data-variant] { --ag-tint: color-mix(in srgb, var(--ag-stain, var(--ag-accent)) 82%, transparent); --ag-ink: #fff; }
+/* Solid state for knobs at rest. */
+.ag-glass[data-solid] { --ag-tint: #fff; }
+.ag-glass[data-solid] > .ag-refract { background-image: none !important; }
+
+/* Fields draw their outline through a mask. */
+.ag-glass.ag-field { box-shadow: none; }
+.ag-glass.ag-field > .ag-refract { border-radius: 0; filter: drop-shadow(0 6px 14px rgb(0 0 0 / 0.18)); }
+
+@media (prefers-reduced-transparency: reduce) {
+  .ag-glass > .ag-refract { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; background: var(--ag-bg-2) !important; }
+  .ag-glass { --ag-ink: var(--ag-label) !important; }
+}
+@media (prefers-contrast: more) {
+  .ag-glass { outline: 1px solid var(--ag-label-2); }
+}
