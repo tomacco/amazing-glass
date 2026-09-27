@@ -160,7 +160,8 @@ playEl.addEventListener('pointerdown', e => {
 /* ------------------------------------------------ Proof wipe */
 const wipe = $('#wipe'), handle = $('.wipe-handle', wipe);
 const setSplit = (f: number) => { const v = Math.min(100, Math.max(0, f)); wipe.style.setProperty('--split', `${v}%`); handle.setAttribute('aria-valuenow', String(Math.round(v))); };
-wipe.addEventListener('dragstart', e => e.preventDefault());
+// No native drag of images anywhere on the page.
+document.addEventListener('dragstart', e => e.preventDefault());
 wipe.addEventListener('pointerdown', e => {
   e.preventDefault(); // no text selection or image drag while scrubbing
   const r = wipe.getBoundingClientRect();

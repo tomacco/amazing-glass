@@ -4,6 +4,11 @@
 
 .ag-icon { display: block; flex: none; }
 
+/* Controls you press or drag never start a text selection or a native drag. */
+ag-button, ag-switch, ag-slider, ag-segmented, ag-tab-bar, ag-menu, ag-toolbar, .ag-sheet-grabber {
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+}
+
 /* ------------------------------------------------ Glass surface */
 ag-glass { display: block; border-radius: var(--ag-radius, 28px); }
 

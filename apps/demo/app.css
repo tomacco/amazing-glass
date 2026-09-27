@@ -183,3 +183,9 @@ h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
 
 /* Draggables: no text selection, no native image drag, no long-press callout. */
 .lens, .play-glass, .liquid-stage { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+
+/* The demo is for touching, not reading: no text selection, no image dragging, no
+   long-press callouts. Code and inputs stay selectable so snippets can be copied. */
+body { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+img, canvas { -webkit-user-drag: none; }
+pre, pre *, code, input, textarea { user-select: text; -webkit-user-select: text; }
