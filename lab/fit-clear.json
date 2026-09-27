@@ -1,35 +1,35 @@
 {
   "scene": "chart,dusk",
   "variant": "clear",
-  "loss": 2.3313333333333333,
+  "loss": 1.6413333333333333,
   "regions": {
     "chart": {
-      "clrCap": 2.412,
-      "clrCirc": 2.436,
-      "clrRect": 1.477
+      "clrCap": 3.361,
+      "clrCirc": 1.34,
+      "clrRect": 1.268
     },
     "dusk": {
-      "clrCap": 1.841,
-      "clrCirc": 1.95,
-      "clrRect": 3.872
+      "clrCap": 1.07,
+      "clrCirc": 1.061,
+      "clrRect": 1.748
     }
   },
   "params": {
-    "blur": 12.0184,
+    "blur": 16.0184,
     "saturate": 1.3089,
     "bezel": 0.4929,
-    "maxBezel": 32.4908,
+    "maxBezel": 34.8346,
     "depth": 1.1958,
-    "dispersion": 0.0766,
-    "rim": 1.0082,
-    "shade": 0.03,
+    "dispersion": 0.0166,
+    "rim": 0.1043,
+    "shade": 0,
     "rimWidth": 0.3,
-    "tr": 255,
-    "tg": 249.2528,
+    "tr": 249.1406,
+    "tg": 249.1406,
     "tb": 255,
     "ta": 0.235,
     "sa": 0,
     "lum": 1,
-    "contrast": 0.8619
+    "contrast": 0.901
   }
 }

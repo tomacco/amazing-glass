@@ -34,7 +34,7 @@
   --ag-glass-regular-light: rgb(255 255 255 / 0.496); /* fitted */
   --ag-glass-regular-dark: rgb(30 30 34 / 0.36);
   --ag-glass-shadow: none; /* fitted: .glassEffect casts no measurable shadow */
-  --ag-glass-clear: rgb(255 249 255 / 0.235); /* fitted */
+  --ag-glass-clear: rgb(249 249 255 / 0.235); /* fitted */
 
   /* Typography: iOS Dynamic Type, default (Large) size */
   --ag-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;

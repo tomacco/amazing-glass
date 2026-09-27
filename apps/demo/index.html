@@ -35,7 +35,8 @@
       <ag-button size="large" id="cta-code">Get the code</ag-button>
     </div>
   </div>
-  <div class="lens" id="lens" aria-hidden="true"><span class="lens-hint">drag me</span></div>
+  <div class="drops" id="drops" aria-hidden="true"></div>
+  <div class="drop-handle" id="drop-handle" aria-hidden="true"></div>
 </header>
 
 <main>
@@ -106,11 +107,11 @@
       <div class="proof-row">
         <ag-segmented id="wipe-scene" options="Test card,Dusk" value="Test card"></ag-segmented>
         <div class="scores">
-          <div class="score"><b>Regular</b><div class="bar"><i style="--from:7.13;--to:2.09"></i></div><span><s>7.13</s> 2.09</span></div>
-          <div class="score"><b>Clear</b><div class="bar"><i style="--from:19.48;--to:2.33"></i></div><span><s>19.48</s> 2.33</span></div>
+          <div class="score"><b>Regular</b><div class="bar"><i style="--from:7.13;--to:2.02"></i></div><span><s>7.13</s> 2.02</span></div>
+          <div class="score"><b>Clear</b><div class="bar"><i style="--from:19.48;--to:1.64"></i></div><span><s>19.48</s> 1.64</span></div>
         </div>
       </div>
-      <p class="fine">Mean absolute error per colour channel, 0 to 255 scale, over each glass shape plus a 10 px margin, two scenes, macOS 27. The biggest surprise: Apple's Clear glass is frosted, about 12 px of blur. We had it at 1.6.</p>
+      <p class="fine">Mean absolute error per colour channel, 0 to 255 scale, over each glass shape plus a 10 px margin, two scenes, macOS 27. The biggest surprise: Apple's Clear glass is frosted, about 16 px of blur. We had it at 1.6.</p>
     </div>
   </section>
 
@@ -187,7 +188,7 @@
     <div class="wrap chapter-head reveal">
       <span class="kicker">06</span>
       <h2>Two drops, one glass.</h2>
-      <p>Bring glass shapes close and they melt into one surface, with one rim and one refraction. Move your pointer over it.</p>
+      <p>Bring glass shapes close and they melt into one surface, with one rim and one refraction. Move your pointer over it, or drag a finger sideways across it.</p>
     </div>
     <div class="liquid-stage reveal-y" id="liquid-stage">
       <canvas class="scene-canvas" data-scene="dusk" aria-hidden="true"></canvas>

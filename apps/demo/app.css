@@ -40,9 +40,10 @@ h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; animation: rise 0.9s 0.35s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes rise { from { transform: translateY(28px); opacity: 0; } }
 
-.lens { position: absolute; left: 0; top: 0; width: clamp(150px, 24vw, 300px); aspect-ratio: 1; border-radius: 50%; z-index: 2; cursor: grab; touch-action: none; will-change: transform; }
-.lens:active { cursor: grabbing; }
-.lens-hint { position: absolute; left: 50%; bottom: -30px; transform: translateX(-50%); font: 500 12px/1 var(--mono); color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; pointer-events: none; }
+.drops { z-index: 2; pointer-events: none; }
+.drops.ag-glass[data-variant] { --ag-tint: rgb(255 255 255 / 0.05); }
+.drop-handle { position: absolute; left: 0; top: 0; z-index: 3; border-radius: 50%; cursor: grab; touch-action: none; }
+.drop-handle:active { cursor: grabbing; }
 
 /* ------------------------------------------------ Chapters */
 .chapter { padding-block: clamp(80px, 12vw, 150px) 0; }
@@ -147,7 +148,7 @@ h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
 .np-buttons { display: flex; justify-content: center; gap: 18px; margin: 18px 0; }
 
 /* 06: liquid */
-.liquid-stage { position: relative; height: clamp(320px, 45vw, 520px); overflow: hidden; isolation: isolate; margin-inline: 20px; border-radius: 32px; }
+.liquid-stage { touch-action: pan-y; position: relative; height: clamp(320px, 45vw, 520px); overflow: hidden; isolation: isolate; margin-inline: 20px; border-radius: 32px; }
 .liquid-field { position: absolute; inset: 0; }
 
 /* 07: code */
@@ -178,11 +179,10 @@ h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
   .vs-card figcaption code { font-size: 11px; }
   .marquee { inset: 0 0 130px; }
   .marquee-row { font-size: 64px; }
-  .lens-hint { display: none; }
 }
 
 /* Draggables: no text selection, no native image drag, no long-press callout. */
-.lens, .play-glass, .liquid-stage { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.hero, .play-glass, .liquid-stage { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 
 /* The demo is for touching, not reading: no text selection, no image dragging, no
    long-press callouts. Code and inputs stay selectable so snippets can be copied. */

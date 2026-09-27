@@ -7,8 +7,9 @@ export interface ShapeSample {
 }
 /**
  * Signed distance and normal for a rounded rectangle centred at the origin.
- * Corners use a superellipse (exponent 2.6), which reads like Apple's continuous
- * corners rather than plain circular arcs.
+ * Corners are circular arcs because CSS border-radius clips to circular arcs. The shape the
+ * light is computed for must be the shape the browser shows: an earlier superellipse corner
+ * bulged past the clip, so the rim highlight survived only at the four edge midpoints.
  */
 export declare function roundedRect(px: number, py: number, hw: number, hh: number, r: number): ShapeSample;
 /** Rounded box centred at (x, y), for fields of several shapes. */

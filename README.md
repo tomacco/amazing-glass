@@ -8,7 +8,7 @@ Web components for plain HTML, React and Vue. Real refraction, tuned against App
 
 [Live demo](https://tomacco.github.io/amazing-glass/) · [Guide](https://tomacco.github.io/amazing-glass/guide/) · [API](docs/API.md) · [For AI agents](AGENTS.md)
 
-<img src="docs/img/hero.jpg" alt="The amazing-glass demo: a glass lens bending the headline 'Glass that bends the page behind it.'" width="100%">
+<img src="docs/img/hero.jpg" alt="The amazing-glass demo: liquid glass drops merging over the headline &quot;Glass that bends the page behind it.&quot;" width="100%">
 
 </div>
 
@@ -32,12 +32,12 @@ A small SwiftUI app draws Apple's `.glassEffect(.regular)` and `.glassEffect(.cl
 
 | Variant | Error before fitting | Error after |
 |---|---:|---:|
-| Regular | 7.13 | **2.09** |
-| Clear | 19.48 | **2.33** |
+| Regular | 7.13 | **2.02** |
+| Clear | 19.48 | **1.64** |
 
 Mean absolute error per colour channel on a 0 to 255 scale, over each glass shape plus a 10 px margin, two scenes, macOS 27. The rig lives in [`lab/`](lab/), so you can rerun it and tell us we are wrong.
 
-Plot twist from the data: Apple's Clear glass is frosted, around 12 px of blur. We had it at 1.6. The fitter was not impressed.
+Plot twist from the data: Apple's Clear glass is frosted, around 16 px of blur. We had it at 1.6. The fitter was not impressed.
 
 ### 3. The controls are ready.
 

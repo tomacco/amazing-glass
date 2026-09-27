@@ -1,7 +1,7 @@
 // src/core/params.ts
 var VARIANTS2 = {
-  regular: { blur: 10.35, saturate: 2.25, lum: 0.99, contrast: 0.81, bezel: 0.42, maxBezel: 30.6, depth: 1.19, ior: 1.5, dispersion: 0, zoom: 1, rim: 0.66, rimWidth: 0.3, shade: 0.03, light: -135 },
-  clear: { blur: 12.02, saturate: 1.31, lum: 1, contrast: 0.86, bezel: 0.49, maxBezel: 32.5, depth: 1.2, ior: 1.5, dispersion: 0.077, zoom: 1, rim: 1.01, rimWidth: 0.3, shade: 0.03, light: -135 },
+  regular: { blur: 10.351, saturate: 2.252, lum: 0.991, contrast: 0.813, bezel: 0.421, maxBezel: 30.629, depth: 1.188, ior: 1.5, dispersion: 0, zoom: 1, rim: 0.102, rimWidth: 0.3, shade: 0.03, light: -135 },
+  clear: { blur: 16.018, saturate: 1.309, lum: 1, contrast: 0.901, bezel: 0.493, maxBezel: 34.835, depth: 1.196, ior: 1.5, dispersion: 0.017, zoom: 1, rim: 0.104, rimWidth: 0.3, shade: 0, light: -135 },
   lens: { blur: 0, saturate: 1.2, lum: 1, contrast: 1, bezel: 0.42, maxBezel: 34, depth: 1, ior: 1.5, dispersion: 0.14, zoom: 1.08, rim: 1.7, rimWidth: 1.25, shade: 0.16, light: -135 }
 };
 function resolveParams2(variant, overrides) {
@@ -14,12 +14,10 @@ function roundedRect2(px, py, hw, hh, r) {
   const qx = ax - (hw - r), qy = ay - (hh - r);
   let d, nx, ny;
   if (qx > 0 && qy > 0) {
-    const n = 2.6;
-    d = Math.pow(Math.pow(qx, n) + Math.pow(qy, n), 1 / n) - r;
-    const gx = Math.pow(qx, n - 1), gy = Math.pow(qy, n - 1);
-    const gl = Math.hypot(gx, gy) || 1;
-    nx = gx / gl;
-    ny = gy / gl;
+    const len = Math.hypot(qx, qy);
+    d = len - r;
+    nx = qx / len;
+    ny = qy / len;
   } else if (qx > qy) {
     d = qx - r;
     nx = 1;
@@ -550,10 +548,18 @@ class GlassField2 {
   filter;
   cpu;
   id = `ag-field-${++uid2}`;
+  fit;
+  margin;
+  lastSet = 0;
+  settle = 0;
   constructor(el, opts = {}) {
     this.el = el;
     this.params = resolveParams2(opts.variant ?? "clear", opts.params);
     this.merge = opts.merge ?? 36;
+    this.fit = opts.fit ?? false;
+    this.margin = opts.margin ?? this.merge;
+    if (this.fit)
+      Object.assign(el.style, { position: "absolute", left: "0px", top: "0px" });
     el.classList.add("ag-glass", "ag-field");
     el.dataset.variant = opts.variant ?? "clear";
     this.layer = document.createElement("span");
@@ -563,39 +569,57 @@ class GlassField2 {
   }
   setShapes(shapes) {
     this.shapes = shapes;
+    const now = performance.now(), live = now - this.lastSet < 100;
+    this.lastSet = now;
+    clearTimeout(this.settle);
+    if (live)
+      this.settle = window.setTimeout(() => this.render(false), 150);
     if (!this.frame)
       this.frame = requestAnimationFrame(() => {
         this.frame = 0;
-        this.render();
+        this.render(live);
       });
   }
   setParams(params) {
     this.params = { ...this.params, ...params };
     this.setShapes(this.shapes);
   }
-  render() {
+  render(draft = false) {
+    if (!this.shapes.length)
+      return;
+    let shapes = this.shapes;
+    if (this.fit) {
+      const m = this.margin;
+      const x0 = Math.floor(Math.min(...shapes.map((s) => s.x - s.w / 2)) - m), y0 = Math.floor(Math.min(...shapes.map((s) => s.y - s.h / 2)) - m);
+      const x1 = Math.ceil(Math.max(...shapes.map((s) => s.x + s.w / 2)) + m), y1 = Math.ceil(Math.max(...shapes.map((s) => s.y + s.h / 2)) + m);
+      Object.assign(this.el.style, { transform: `translate(${x0}px, ${y0}px)`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
+      shapes = shapes.map((s) => ({ ...s, x: s.x - x0, y: s.y - y0 }));
+    }
     const w = this.el.offsetWidth, h = this.el.offsetHeight;
-    if (!w || !h || !this.shapes.length)
+    if (!w || !h)
       return;
     const p = this.params, k = this.merge;
-    const minSide = Math.min(...this.shapes.map((s) => Math.min(s.w, s.h)));
+    const minSide = Math.min(...shapes.map((s) => Math.min(s.w, s.h)));
     const bezel = bezelWidth(minSide, minSide, p.bezel, p.maxBezel);
-    const sdf = new Float32Array(w * h);
-    for (let y = 0;y < h; y++)
-      for (let x = 0;x < w; x++) {
+    const g = draft ? 0.5 : 1;
+    const gw = Math.max(2, Math.ceil(w * g)), gh = Math.max(2, Math.ceil(h * g));
+    const sdf = new Float32Array(gw * gh);
+    for (let y = 0;y < gh; y++)
+      for (let x = 0;x < gw; x++) {
         let d = 1e9;
-        for (const s of this.shapes)
-          d = smoothMin2(d, boxDistance(x + 0.5, y + 0.5, s), k);
-        sdf[y * w + x] = d;
+        for (const s of shapes)
+          d = smoothMin2(d, boxDistance((x + 0.5) / g, (y + 0.5) / g, s), k);
+        sdf[y * gw + x] = d;
       }
-    const at = (x, y) => sdf[Math.min(h - 1, Math.max(0, y)) * w + Math.min(w - 1, Math.max(0, x))];
+    const at = (x, y) => sdf[Math.min(gh - 1, Math.max(0, y)) * gw + Math.min(gw - 1, Math.max(0, x))];
     const sample = (px, py) => {
-      const x = Math.floor(px), y = Math.floor(py);
+      const fx = px * g - 0.5, fy = py * g - 0.5, x = Math.floor(fx), y = Math.floor(fy), tx = fx - x, ty = fy - y;
+      const d = (at(x, y) * (1 - tx) + at(x + 1, y) * tx) * (1 - ty) + (at(x, y + 1) * (1 - tx) + at(x + 1, y + 1) * tx) * ty;
       const gx = at(x + 1, y) - at(x - 1, y), gy = at(x, y + 1) - at(x, y - 1);
       const gl = Math.hypot(gx, gy) || 1;
-      return { d: at(x, y), nx: gx / gl, ny: gy / gl };
+      return { d, nx: gx / gl, ny: gy / gl };
     };
-    const maps = drawMaps(this.id + performance.now(), w, h, sample, { ...p, zoom: 1 }, bezel, { mask: true });
+    const maps = drawMaps(this.id + performance.now(), w, h, sample, { ...p, zoom: 1 }, bezel, { mask: true, draft });
     const mask = `url(${maps.mask})`;
     const ls = this.layer.style;
     ls.maskImage = ls.webkitMaskImage = mask;

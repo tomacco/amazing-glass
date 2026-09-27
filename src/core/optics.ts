@@ -10,19 +10,18 @@ export interface ShapeSample {
 
 /**
  * Signed distance and normal for a rounded rectangle centred at the origin.
- * Corners use a superellipse (exponent 2.6), which reads like Apple's continuous
- * corners rather than plain circular arcs.
+ * Corners are circular arcs because CSS border-radius clips to circular arcs. The shape the
+ * light is computed for must be the shape the browser shows: an earlier superellipse corner
+ * bulged past the clip, so the rim highlight survived only at the four edge midpoints.
  */
 export function roundedRect(px: number, py: number, hw: number, hh: number, r: number): ShapeSample {
   const ax = Math.abs(px), ay = Math.abs(py);
   const qx = ax - (hw - r), qy = ay - (hh - r);
   let d: number, nx: number, ny: number;
   if (qx > 0 && qy > 0) {
-    const n = 2.6;
-    d = Math.pow(Math.pow(qx, n) + Math.pow(qy, n), 1 / n) - r;
-    const gx = Math.pow(qx, n - 1), gy = Math.pow(qy, n - 1);
-    const gl = Math.hypot(gx, gy) || 1;
-    nx = gx / gl; ny = gy / gl;
+    const len = Math.hypot(qx, qy);
+    d = len - r;
+    nx = qx / len; ny = qy / len;
   } else if (qx > qy) {
     d = qx - r; nx = 1; ny = 0;
   } else {

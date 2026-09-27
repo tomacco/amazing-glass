@@ -35,6 +35,15 @@ describe('shapes', () => {
     expect(r.ny).toBe(1);
     expect(roundedRect(-49, 0, 50, 20, 20).nx).toBe(-1);
   });
+  test('corners are circular, matching CSS border-radius', () => {
+    // A circle: every point at distance r from the centre is on the outline.
+    for (const a of [0.1, 0.5, Math.PI / 4, 1.2]) {
+      const s = roundedRect(Math.cos(a) * 50, Math.sin(a) * 50, 50, 50, 50);
+      expect(Math.abs(s.d)).toBeLessThan(1e-9);
+      expect(s.nx).toBeCloseTo(Math.cos(a), 9);
+      expect(s.ny).toBeCloseTo(Math.sin(a), 9);
+    }
+  });
   test('smooth minimum melts shapes together', () => {
     const a = boxDistance(50, 0, { x: 0, y: 0, w: 60, h: 60, r: 30 });
     const b = boxDistance(50, 0, { x: 100, y: 0, w: 60, h: 60, r: 30 });

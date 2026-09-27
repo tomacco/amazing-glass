@@ -39,32 +39,70 @@ function blobs(canvas: HTMLCanvasElement, palette: string[], opts: { base: strin
 blobs($('.hero-bg'), ['#1d4ed8', '#7c3aed', '#db2777', '#0891b2', '#f97316'], { base: '#08090d', count: 7, speed: 1, alpha: 0.55 });
 blobs($('.control-bg'), ['#ff5e62', '#ff9966', '#5b8cff', '#a855f7', '#22d3ee', '#fbbf24', '#f472b6'], { base: '#0b1b4d', count: 9, speed: 1.6, alpha: 0.8 });
 
-/* ------------------------------------------------ Hero lens */
-const hero = $('.hero'), lensEl = $('#lens');
-// A magnifier: strong zoom in the middle, a thin bending rim, barely any rainbow.
-const LENS = { blur: 0, zoom: 1.35, bezel: 0.2, maxBezel: 34, depth: 0.75, dispersion: 0.025, rim: 1.3 };
-new Glass(lensEl, { variant: 'lens', params: LENS });
-let hold = 0, px = 0, py = 0;
-function placeLens(x: number, y: number) { px = x; py = y; lensEl.style.transform = `translate(${x - lensEl.offsetWidth / 2}px, ${y - lensEl.offsetHeight / 2}px)`; }
-function driftLens(t: number) {
-  if (performance.now() > hold) {
-    const r = hero.getBoundingClientRect(), title = $('.hero-title').getBoundingClientRect();
-    // A slow figure-eight across the headline.
-    const cx = title.left - r.left + title.width * 0.5, cy = title.top - r.top + title.height * 0.5;
-    placeLens(cx + Math.sin(t * 0.00035) * title.width * 0.38, cy + Math.sin(t * 0.0007) * title.height * 0.32);
-  }
-  if (!still) requestAnimationFrame(driftLens);
+/* ------------------------------------------------ Hero: liquid drops */
+// One big drop you can drag, and three droplets on springs that orbit it, drift off and melt
+// back in. They are shapes in one GlassField, so wherever they touch they share one surface.
+const hero = $('.hero'), dropsEl = $('#drops');
+const drops = new GlassField(dropsEl, {
+  merge: 46, fit: true, margin: 56,
+  params: { blur: 0, saturate: 1.25, lum: 1, contrast: 1, bezel: 0.42, maxBezel: 44, depth: 1.2, dispersion: 0.035, rim: 1.35, rimWidth: 1.1, shade: 0.12 },
+});
+const R = () => Math.max(62, Math.min(130, innerWidth * 0.1));
+const big = { x: 0, y: 0 }, heroTarget = { x: 0, y: 0 };
+const kids = [0.34, 0.26, 0.2].map((s, i) => ({ s, x: 0, y: 0, vx: 0, vy: 0, phase: i * 2.1, speed: 0.00042 + i * 0.00013 }));
+let dragging = false, userMoved = 0, lastT = performance.now();
+function heroHome(t: number) {
+  const r = hero.getBoundingClientRect(), title = $('.hero-title').getBoundingClientRect();
+  const narrow = innerWidth < 700;
+  // Resting path: a slow drift across the headline, so there is always something to bend.
+  const cx = title.left - r.left + title.width * (narrow ? 0.62 : 0.66), cy = title.top - r.top + title.height * (narrow ? 0.35 : 0.5);
+  return { x: cx + Math.sin(t * 0.00023) * title.width * (narrow ? 0.18 : 0.26), y: cy + Math.sin(t * 0.00041) * title.height * 0.2 };
 }
-requestAnimationFrame(driftLens);
-if (still) placeLens(innerWidth * 0.6, innerHeight * 0.4);
-lensEl.addEventListener('pointerdown', e => {
+function heroFrame(t: number) {
+  const dt = Math.min(40, t - lastT); lastT = t;
+  if (!dragging && t > userMoved) Object.assign(heroTarget, heroHome(t));
+  // The big drop eases toward its heroTarget; the droplets chase orbit points on damped springs.
+  big.x += (heroTarget.x - big.x) * (dragging ? 0.5 : 0.08);
+  big.y += (heroTarget.y - big.y) * (dragging ? 0.5 : 0.08);
+  const rad = R();
+  for (const k of kids) {
+    const a = t * k.speed + k.phase;
+    // Each droplet swings between touching the big drop and flying well clear of it.
+    const reach = rad * (1.1 + 1.25 * (0.5 + 0.5 * Math.sin(t * 0.0006 + k.phase * 1.7)));
+    const gx = big.x + Math.cos(a) * reach, gy = big.y + Math.sin(a) * reach * 0.8;
+    k.vx = (k.vx + (gx - k.x) * 0.0016 * dt) * 0.88; k.vy = (k.vy + (gy - k.y) * 0.0016 * dt) * 0.88;
+    k.x += k.vx * dt * 0.06; k.y += k.vy * dt * 0.06;
+  }
+  drops.setShapes([
+    { x: big.x, y: big.y, w: rad * 2, h: rad * 2, r: rad },
+    ...kids.map(k => ({ x: k.x, y: k.y, w: rad * 2 * k.s, h: rad * 2 * k.s, r: rad * k.s })),
+  ]);
+  if (!still) requestAnimationFrame(heroFrame);
+}
+{ const h0 = heroHome(0); Object.assign(big, h0); Object.assign(heroTarget, h0); kids.forEach(k => { k.x = h0.x; k.y = h0.y; }); }
+requestAnimationFrame(heroFrame);
+// An invisible dropHandle rides on the big drop. It carries touch-action: none from the start,
+// because a phone decides between scrolling and dragging the moment the finger lands.
+const dropHandle = $('#drop-handle');
+const placeHandle = () => {
+  const rad = R();
+  dropHandle.style.width = dropHandle.style.height = `${rad * 2}px`;
+  dropHandle.style.transform = `translate(${big.x - rad}px, ${big.y - rad}px)`;
+};
+(function follow() { placeHandle(); requestAnimationFrame(follow); })();
+dropHandle.addEventListener('pointerdown', e => {
   e.preventDefault();
-  lensEl.setPointerCapture(e.pointerId);
-  const r = hero.getBoundingClientRect(), ox = e.clientX - r.left - px, oy = e.clientY - r.top - py;
-  const move = (ev: PointerEvent) => { hold = performance.now() + 4000; placeLens(ev.clientX - r.left - ox, ev.clientY - r.top - oy); };
-  const up = () => { lensEl.removeEventListener('pointermove', move); lensEl.removeEventListener('pointerup', up); hold = performance.now() + 2500; };
-  lensEl.addEventListener('pointermove', move);
-  lensEl.addEventListener('pointerup', up);
+  const r = hero.getBoundingClientRect(), ox = e.clientX - r.left - big.x, oy = e.clientY - r.top - big.y;
+  dragging = true;
+  dropHandle.setPointerCapture(e.pointerId);
+  const move = (ev: PointerEvent) => { heroTarget.x = ev.clientX - r.left - ox; heroTarget.y = ev.clientY - r.top - oy; };
+  const up = () => {
+    dragging = false; userMoved = performance.now() + 3500;
+    dropHandle.removeEventListener('pointermove', move); dropHandle.removeEventListener('pointerup', up); dropHandle.removeEventListener('pointercancel', up);
+  };
+  dropHandle.addEventListener('pointermove', move);
+  dropHandle.addEventListener('pointerup', up);
+  dropHandle.addEventListener('pointercancel', up);
 });
 $('#cta-proof').addEventListener('click', () => $('#proof').scrollIntoView({ behavior: 'smooth' }));
 $('#cta-code').addEventListener('click', () => $('#use').scrollIntoView({ behavior: 'smooth' }));
@@ -103,11 +141,12 @@ function drawRays(t: number) {
     c.fillStyle = '#fff'; c.beginPath(); c.arc(x + off, floor, 3, 0, 7); c.fill();
   }
   c.fillStyle = 'rgba(244,245,247,0.6)'; c.font = '500 12px "Geist Mono", monospace';
+  // Labels sit in the empty band above the glass, clear of the rays.
   c.textAlign = 'right';
   c.fillText('view rays ↓', W - 12, 22);
-  c.fillText('flat top: no bend', W - 12, floor - thick - 10);
+  c.fillText('flat top: no bend', W - 12, floor - thick - 12);
   c.textAlign = 'left';
-  c.fillText('curved rim', 12, floor - thick * 0.5);
+  c.fillText('curved rim ↓', Math.max(8, left - 30), floor - thick - 12);
   c.fillText('the page behind', 12, H - 10);
   if (!still) requestAnimationFrame(drawRays);
 }
@@ -116,6 +155,7 @@ requestAnimationFrame(drawRays);
 /* ------------------------------------------------ Playground */
 const playEl = $('#play-glass'), playStage = $('.play-stage');
 // The playground starts as the same magnifying lens as the hero, so the thing you drag is a lens.
+const LENS = { blur: 0, zoom: 1.35, bezel: 0.2, maxBezel: 34, depth: 0.75, dispersion: 0.025, rim: 1.3 };
 const PRESET_PARAMS: Record<GlassVariant, Partial<typeof LENS>> = { regular: {}, clear: {}, lens: LENS };
 let play = new Glass(playEl, { variant: 'lens', params: LENS });
 const shapes: Record<GlassVariant, [number, number, string]> = { regular: [260, 120, '60px'], clear: [260, 120, '60px'], lens: [190, 190, '50%'] };
@@ -222,6 +262,8 @@ $<AgTabBar>('#tabs').items = [
 const liquid = $('#liquid-stage'), fieldEl = $('#liquid-field');
 const field = new GlassField(fieldEl, { variant: 'clear', merge: 60, params: { blur: 0.6, bezel: 0.4, maxBezel: 40, depth: 1.3, dispersion: 0.16, rim: 1.3 } });
 let target = { x: 0.7, y: 0.5 }, drop = { x: 0.7, y: 0.5 }, pointerIn = false;
+liquid.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') pointerIn = true; });
+liquid.addEventListener('pointerup', e => { if (e.pointerType === 'touch') pointerIn = false; });
 liquid.addEventListener('pointermove', e => { const r = liquid.getBoundingClientRect(); target = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }; pointerIn = true; });
 liquid.addEventListener('pointerleave', () => { pointerIn = false; });
 let liquidVisible = false;

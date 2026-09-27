@@ -64,7 +64,7 @@
     "build": "bun tools/build.ts",
     "dev": "bun tools/serve.ts",
     "test": "bun test",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.apps.json",
     "lab:score": "REPEAT=1 node lab/fit.mjs chart,dusk regular 0 && REPEAT=1 node lab/fit.mjs chart,dusk clear 0",
     "voice": "bun tools/voice-check.ts"
   },

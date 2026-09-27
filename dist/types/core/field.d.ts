@@ -21,10 +21,24 @@ export declare class GlassField {
     private filter?;
     private cpu?;
     private readonly id;
+    private fit;
+    private margin;
+    private lastSet;
+    private settle;
+    /**
+     * Options:
+     * - `merge`: distance in px over which shapes melt together.
+     * - `fit`: shapes are given in the coordinates of the element's offset parent, and the
+     *   element resizes itself to just the shapes. Use it when shapes roam a large area:
+     *   the cost is per pixel of the element, so a small box stays fast.
+     * - `margin`: extra room around fitted shapes, for the merge bridges and the rim.
+     */
     constructor(el: HTMLElement, opts?: {
         variant?: GlassVariant;
         params?: Partial<GlassParams>;
         merge?: number;
+        fit?: boolean;
+        margin?: number;
     });
     setShapes(shapes: Box[]): void;
     setParams(params: Partial<GlassParams>): void;

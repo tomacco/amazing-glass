@@ -1,15 +1,15 @@
 {
   "scene": "chart,dusk",
   "variant": "regular",
-  "loss": 2.08575,
+  "loss": 2.0172499999999998,
   "regions": {
     "chart": {
-      "regCap": 2.855,
-      "regRect": 1.658
+      "regCap": 2.895,
+      "regRect": 1.551
     },
     "dusk": {
-      "regCap": 2.128,
-      "regRect": 1.702
+      "regCap": 2.108,
+      "regRect": 1.515
     }
   },
   "params": {
@@ -19,7 +19,7 @@
     "maxBezel": 30.629,
     "depth": 1.1875,
     "dispersion": 0,
-    "rim": 0.6585,
+    "rim": 0.1023,
     "shade": 0.03,
     "rimWidth": 0.3,
     "tr": 255,

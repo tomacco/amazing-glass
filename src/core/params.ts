@@ -38,8 +38,8 @@ export type GlassVariant = 'regular' | 'clear' | 'lens';
  * `lens` is hand-tuned for the transient glass knobs of switches and sliders.
  */
 export const VARIANTS: Record<GlassVariant, GlassParams> = {
-  regular: { blur: 10.35, saturate: 2.25, lum: 0.99, contrast: 0.81, bezel: 0.42, maxBezel: 30.6, depth: 1.19, ior: 1.5, dispersion: 0, zoom: 1, rim: 0.66, rimWidth: 0.3, shade: 0.03, light: -135 },
-  clear: { blur: 12.02, saturate: 1.31, lum: 1, contrast: 0.86, bezel: 0.49, maxBezel: 32.5, depth: 1.2, ior: 1.5, dispersion: 0.077, zoom: 1, rim: 1.01, rimWidth: 0.3, shade: 0.03, light: -135 },
+  regular: { blur: 10.351, saturate: 2.252, lum: 0.991, contrast: 0.813, bezel: 0.421, maxBezel: 30.629, depth: 1.188, ior: 1.5, dispersion: 0, zoom: 1, rim: 0.102, rimWidth: 0.3, shade: 0.03, light: -135 },
+  clear: { blur: 16.018, saturate: 1.309, lum: 1, contrast: 0.901, bezel: 0.493, maxBezel: 34.835, depth: 1.196, ior: 1.5, dispersion: 0.017, zoom: 1, rim: 0.104, rimWidth: 0.3, shade: 0, light: -135 },
   lens: { blur: 0, saturate: 1.2, lum: 1, contrast: 1, bezel: 0.42, maxBezel: 34, depth: 1, ior: 1.5, dispersion: 0.14, zoom: 1.08, rim: 1.7, rimWidth: 1.25, shade: 0.16, light: -135 },
 };
 

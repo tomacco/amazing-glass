@@ -28,6 +28,9 @@ try {
   const send = (method, params = {}) => new Promise(r => { const i = ++id; pending.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
   await send('Runtime.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: +w, height: +h, deviceScaleFactor: 2, mobile: +w < 500 });
+  if (+w < 500) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  // CPU=4 slows the CPU fourfold, roughly a mid-range phone.
+  if (process.env.CPU) await send('Emulation.setCPUThrottlingRate', { rate: +process.env.CPU });
   await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }, { name: 'prefers-color-scheme', value: scheme }] });
   await send('Page.enable');
   await send('Page.navigate', { url });
@@ -41,10 +44,18 @@ try {
       const r = await send('Runtime.evaluate', { expression: `(()=>{const b=document.querySelector(${JSON.stringify(a.sel)}).getBoundingClientRect();return [b.left+b.width/2,b.top+b.height/2]})()`, returnByValue: true });
       [x, y] = r.result.result.value; x += a.dx || 0; y += a.dy || 0;
     }
-    const type = { down: 'mousePressed', up: 'mouseReleased', move: 'mouseMoved' }[a.type];
-    await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: a.type === 'up' ? 0 : 1, clickCount: 1 });
+    if (a.type.startsWith('touch')) {
+      // touchStart / touchMove / touchEnd: a real finger, for mobile checks.
+      const type = { touchStart: 'touchStart', touchMove: 'touchMove', touchEnd: 'touchEnd' }[a.type];
+      await send('Input.dispatchTouchEvent', { type, touchPoints: a.type === 'touchEnd' ? [] : [{ x, y }] });
+    } else {
+      const type = { down: 'mousePressed', up: 'mouseReleased', move: 'mouseMoved' }[a.type];
+      await send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: a.type === 'up' ? 0 : 1, clickCount: 1 });
+    }
     await sleep(a.wait ?? 60);
   }
+  // POST='expr' is evaluated after the actions, to read state the gesture left behind.
+  if (process.env.POST) { const r = await send('Runtime.evaluate', { expression: process.env.POST, awaitPromise: true, returnByValue: true }); console.log('post:', JSON.stringify(r.result?.result?.value)); }
   const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
   writeFileSync(out, Buffer.from(shot.result.data, 'base64'));
   if (errors.length) console.log('ERRORS:', errors.join('\n'));
