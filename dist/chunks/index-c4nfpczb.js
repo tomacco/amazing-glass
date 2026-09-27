@@ -313,13 +313,19 @@ function canvasBehind(el) {
   if (el.parentElement?.closest(".ag-glass"))
     return null;
   const r = el.getBoundingClientRect();
-  const src = canvasAt(r.left + r.width / 2, r.top + r.height / 2, el);
-  if (!src)
-    return null;
-  const c = src.canvas.getBoundingClientRect();
-  if (r.left < c.left - 1 || r.top < c.top - 1 || r.right > c.right + 1 || r.bottom > c.bottom + 1)
-    return null;
-  return { source: src, rect: r, canvasRect: c, pixels: pixelsOf(src) };
+  for (const src of sources.values()) {
+    if (!src.canvas.isConnected)
+      continue;
+    const c = src.canvas.getBoundingClientRect();
+    const x0 = Math.max(r.left, c.left), x1 = Math.min(r.right, c.right);
+    const y0 = Math.max(r.top, c.top), y1 = Math.min(r.bottom, c.bottom);
+    if (x1 - x0 < 1 || y1 - y0 < 1)
+      continue;
+    if (canvasAt((x0 + x1) / 2, (y0 + y1) / 2, el) !== src)
+      continue;
+    return { source: src, rect: r, canvasRect: c, pixels: pixelsOf(src) };
+  }
+  return null;
 }
 var listeners = new Set;
 var queued = false;
@@ -382,13 +388,19 @@ class CpuRefraction {
     }
     const img = src.pixels, { data: sd, width: SW, height: SH } = img;
     const sx = SW / src.canvasRect.width, sy = SH / src.canvasRect.height;
+    const canvasW = src.canvasRect.width, canvasH = src.canvasRect.height;
     const ctx = this.out.getContext("2d");
     const out = ctx.createImageData(W, H), od = out.data;
     for (let y = 0;y < H; y++) {
       const my = Math.min(raw.height - 1, Math.floor(y * raw.q));
       for (let x = 0;x < W; x++) {
+        const o = (y * W + x) * 4;
+        if (ox + x < 0 || oy + y < 0 || ox + x >= canvasW || oy + y >= canvasH) {
+          od[o + 3] = 0;
+          continue;
+        }
         const mi = my * raw.width + Math.min(raw.width - 1, Math.floor(x * raw.q));
-        const dx = raw.dx[mi], dy = raw.dy[mi], o = (y * W + x) * 4;
+        const dx = raw.dx[mi], dy = raw.dy[mi];
         for (let ch = 0;ch < 3; ch++) {
           const f = 1 + (1 - ch) * dispersion;
           const px = Math.min(SW - 1, Math.max(0, Math.round((ox + x + dx * f) * sx)));

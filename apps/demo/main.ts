@@ -41,7 +41,9 @@ blobs($('.control-bg'), ['#ff5e62', '#ff9966', '#5b8cff', '#a855f7', '#22d3ee', 
 
 /* ------------------------------------------------ Hero lens */
 const hero = $('.hero'), lensEl = $('#lens');
-new Glass(lensEl, { variant: 'lens', params: { blur: 0, zoom: 1.12, bezel: 0.36, maxBezel: 60, depth: 0.9, dispersion: 0.05, rim: 1.4 } });
+// A magnifier: strong zoom in the middle, a thin bending rim, barely any rainbow.
+const LENS = { blur: 0, zoom: 1.35, bezel: 0.2, maxBezel: 34, depth: 0.75, dispersion: 0.025, rim: 1.3 };
+new Glass(lensEl, { variant: 'lens', params: LENS });
 let hold = 0, px = 0, py = 0;
 function placeLens(x: number, y: number) { px = x; py = y; lensEl.style.transform = `translate(${x - lensEl.offsetWidth / 2}px, ${y - lensEl.offsetHeight / 2}px)`; }
 function driftLens(t: number) {
@@ -112,18 +114,25 @@ requestAnimationFrame(drawRays);
 
 /* ------------------------------------------------ Playground */
 const playEl = $('#play-glass'), playStage = $('.play-stage');
-const play = new Glass(playEl, { variant: 'clear' });
-const shapes: Record<GlassVariant, [number, number, string]> = { regular: [260, 120, '60px'], clear: [260, 120, '60px'], lens: [170, 170, '50%'] };
-$<AgSegmented>('#play-variant').addEventListener('change', e => {
-  const v = (e.target as AgSegmented).value.toLowerCase() as GlassVariant;
-  const [w, h, r] = shapes[v];
-  Object.assign(playEl.style, { width: `${w}px`, height: `${h}px`, borderRadius: r });
-  play.setVariant(v);
-  // Reset the sliders to the new preset's values.
+// The playground starts as the same magnifying lens as the hero, so the thing you drag is a lens.
+const PRESET_PARAMS: Record<GlassVariant, Partial<typeof LENS>> = { regular: {}, clear: {}, lens: LENS };
+let play = new Glass(playEl, { variant: 'lens', params: LENS });
+const shapes: Record<GlassVariant, [number, number, string]> = { regular: [260, 120, '60px'], clear: [260, 120, '60px'], lens: [190, 190, '50%'] };
+const syncSliders = () => {
   const p = play.currentParams;
   $<AgSlider>('#p-depth').value = p.depth; $<AgSlider>('#p-bezel').value = p.bezel;
   $<AgSlider>('#p-disp').value = p.dispersion; $<AgSlider>('#p-blur').value = p.blur;
   depth = p.depth;
+};
+requestAnimationFrame(syncSliders);
+$<AgSegmented>('#play-variant').addEventListener('change', e => {
+  const v = (e.target as AgSegmented).value.toLowerCase() as GlassVariant;
+  const [w, h, r] = shapes[v];
+  Object.assign(playEl.style, { width: `${w}px`, height: `${h}px`, borderRadius: r });
+  // A fresh instance, so slider tweaks made on one preset do not leak into the next.
+  play.destroy();
+  play = new Glass(playEl, { variant: v, params: PRESET_PARAMS[v] });
+  syncSliders();
 });
 const bind = (id: string, key: 'depth' | 'bezel' | 'dispersion' | 'blur') =>
   $<AgSlider>(id).addEventListener('input', e => {

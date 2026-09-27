@@ -15,7 +15,10 @@ export declare function luminanceAt(x: number, y: number, self: Element): number
  * from flickering over mid-grey content.
  */
 export declare function measureTone(el: HTMLElement): 'light' | 'dark' | null;
-/** The source canvas fully behind an element, for the CPU refraction path. */
+/**
+ * The registered canvas behind an element, for the CPU refraction path. The element may
+ * hang over the canvas edge: the overlap is refracted, the rest is left to the page.
+ */
 export declare function canvasBehind(el: HTMLElement): {
     source: Source;
     rect: DOMRect;

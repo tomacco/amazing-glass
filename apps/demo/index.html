@@ -76,9 +76,9 @@
         <figcaption>Cross-section of the rim. Rays enter the curved edge and land further in. Thicker glass, bigger bend.</figcaption>
       </figure>
       <div class="playground">
-        <div class="play-stage"><canvas class="scene-canvas" data-scene="chart" aria-hidden="true"></canvas><div class="play-glass" id="play-glass"></div></div>
+        <div class="play-stage"><canvas class="scene-canvas" data-scene="chart" aria-hidden="true"></canvas><div class="play-glass" id="play-glass"><span class="play-hint">drag me</span></div></div>
         <div class="play-controls">
-          <ag-segmented id="play-variant" options="Regular,Clear,Lens" value="Clear"></ag-segmented>
+          <ag-segmented id="play-variant" options="Lens,Clear,Regular" value="Lens"></ag-segmented>
           <label><span>Thickness</span><ag-slider id="p-depth" min="0" max="2.4" step="0.01" value="1.2"></ag-slider></label>
           <label><span>Rim width</span><ag-slider id="p-bezel" min="0.1" max="0.6" step="0.01" value="0.49"></ag-slider></label>
           <label><span>Rainbow</span><ag-slider id="p-disp" min="0" max="0.4" step="0.01" value="0.08"></ag-slider></label>

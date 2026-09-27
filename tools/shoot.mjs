@@ -5,8 +5,9 @@ import { writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 const [url, out, w = 1280, h = 900, pre = '', scheme = 'light', actionsJson = '[]'] = process.argv.slice(2);
 const port = 9300 + Math.floor(Math.random() * 500);
+// HEADFUL=1 runs a real windowed Chrome with the GPU compositor (headless renders on the CPU).
 const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
-  '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${mkdtempSync(tmpdir() + '/lgc-')}`,
+  ...(process.env.HEADFUL ? ['--window-position=0,0', `--window-size=${w},${Number(h) + 90}`] : ['--headless=new']), `--remote-debugging-port=${port}`, `--user-data-dir=${mkdtempSync(tmpdir() + '/lgc-')}`,
   '--no-first-run', '--hide-scrollbars', '--force-device-scale-factor=2', 'about:blank'], { stdio: 'ignore' });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let ws;

@@ -89,15 +89,24 @@ export function measureTone(el: HTMLElement): 'light' | 'dark' | null {
   return cur === 'light' ? (lum < 0.47 ? 'dark' : 'light') : (lum > 0.57 ? 'light' : 'dark');
 }
 
-/** The source canvas fully behind an element, for the CPU refraction path. */
+/**
+ * The registered canvas behind an element, for the CPU refraction path. The element may
+ * hang over the canvas edge: the overlap is refracted, the rest is left to the page.
+ */
 export function canvasBehind(el: HTMLElement) {
   if (el.parentElement?.closest('.ag-glass')) return null; // glass on glass needs the parent's result
   const r = el.getBoundingClientRect();
-  const src = canvasAt(r.left + r.width / 2, r.top + r.height / 2, el);
-  if (!src) return null;
-  const c = src.canvas.getBoundingClientRect();
-  if (r.left < c.left - 1 || r.top < c.top - 1 || r.right > c.right + 1 || r.bottom > c.bottom + 1) return null;
-  return { source: src, rect: r, canvasRect: c, pixels: pixelsOf(src) };
+  for (const src of sources.values()) {
+    if (!src.canvas.isConnected) continue;
+    const c = src.canvas.getBoundingClientRect();
+    // Probe the middle of the overlap, not the middle of the element, which may be outside.
+    const x0 = Math.max(r.left, c.left), x1 = Math.min(r.right, c.right);
+    const y0 = Math.max(r.top, c.top), y1 = Math.min(r.bottom, c.bottom);
+    if (x1 - x0 < 1 || y1 - y0 < 1) continue;
+    if (canvasAt((x0 + x1) / 2, (y0 + y1) / 2, el) !== src) continue;
+    return { source: src, rect: r, canvasRect: c, pixels: pixelsOf(src) };
+  }
+  return null;
 }
 
 // One animation frame per burst of scrolls, resizes or repaints.

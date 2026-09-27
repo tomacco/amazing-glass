@@ -34,13 +34,17 @@ export class CpuRefraction {
 
     const img = src.pixels, sd = img.data, SW = img.width, SH = img.height;
     const sx = SW / src.canvasRect.width, sy = SH / src.canvasRect.height;
+    const canvasW = src.canvasRect.width, canvasH = src.canvasRect.height;
     const ctx = this.out.getContext('2d')!;
     const out = ctx.createImageData(W, H), od = out.data;
     for (let y = 0; y < H; y++) {
       const my = Math.min(raw.height - 1, Math.floor(y * raw.q));
       for (let x = 0; x < W; x++) {
+        const o = (y * W + x) * 4;
+        // Parts of the glass beyond the canvas stay transparent: the page shows through there.
+        if (ox + x < 0 || oy + y < 0 || ox + x >= canvasW || oy + y >= canvasH) { od[o + 3] = 0; continue; }
         const mi = my * raw.width + Math.min(raw.width - 1, Math.floor(x * raw.q));
-        const dx = raw.dx[mi], dy = raw.dy[mi], o = (y * W + x) * 4;
+        const dx = raw.dx[mi], dy = raw.dy[mi];
         for (let ch = 0; ch < 3; ch++) {
           const f = 1 + (1 - ch) * dispersion; // red bends most, blue least
           const px = Math.min(SW - 1, Math.max(0, Math.round((ox + x + dx * f) * sx)));
