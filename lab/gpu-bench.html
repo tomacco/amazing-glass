@@ -1,0 +1,189 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>GPU vs CPU field benchmark</title>
+<!-- The demo hero scene rendered two ways, same motion and material:
+       ?mode=cpu  current pipeline: 2D-canvas blobs + DOM headline + GlassField (SVG backdrop filter)
+       ?mode=gpu  one WebGL2 fragment shader: blobs, headline texture and merged drops together
+     window.bench(seconds) returns fps and main-thread JS time per frame. -->
+<link rel="stylesheet" href="../dist/amazing-glass.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; background: #08090d; overflow: hidden; }
+  #hero { position: relative; width: 100vw; height: 100vh; overflow: hidden; isolation: isolate; }
+  #bg, #gl { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #bg { z-index: -1; }
+  h1 { position: absolute; left: 6vw; top: 22vh; margin: 0; color: #f4f5f7; font: 800 clamp(52px, 11vw, 164px)/0.92 "Bricolage Grotesque", sans-serif; letter-spacing: -0.045em; }
+  h1 span { display: block; }
+  #drops { z-index: 2; pointer-events: none; }
+  .gpu h1, .gpu #bg { visibility: hidden; }
+</style>
+<div id="hero"><canvas id="bg"></canvas><canvas id="gl" hidden></canvas>
+  <h1 id="title"><span>Glass that</span><span>bends the page</span><span>behind it.</span></h1>
+  <div id="drops"></div>
+</div>
+<script type="module">
+import { GlassField } from '../dist/core.js';
+const mode = new URLSearchParams(location.search).get('mode') || 'cpu';
+const hero = document.getElementById('hero'), title = document.getElementById('title');
+await document.fonts.ready;
+
+/* ---------- shared motion (same as the demo hero) ---------- */
+const palette = ['#1d4ed8', '#7c3aed', '#db2777', '#0891b2', '#f97316'];
+let seed = 7; const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+const blobs = Array.from({ length: 7 }, (_, i) => ({ x: rnd(), y: rnd(), r: 0.25 + rnd() * 0.35, c: palette[i % 5], p: rnd() * 7, s: 0.6 + rnd() }));
+const R = () => Math.max(62, Math.min(130, innerWidth * 0.1));
+const big = { x: 0, y: 0 };
+const kids = [0.34, 0.26, 0.2].map((s, i) => ({ s, x: 0, y: 0, vx: 0, vy: 0, phase: i * 2.1, speed: 0.00042 + i * 0.00013 }));
+function step(t, dt) {
+  const tr = title.getBoundingClientRect(), narrow = innerWidth < 700;
+  const cx = tr.left + tr.width * (narrow ? 0.62 : 0.66), cy = tr.top + tr.height * (narrow ? 0.35 : 0.5);
+  const tx = cx + Math.sin(t * 0.00023) * tr.width * (narrow ? 0.18 : 0.26), ty = cy + Math.sin(t * 0.00041) * tr.height * 0.2;
+  if (!big.x) { big.x = tx; big.y = ty; kids.forEach(k => { k.x = tx; k.y = ty; }); }
+  big.x += (tx - big.x) * 0.08; big.y += (ty - big.y) * 0.08;
+  const rad = R();
+  for (const k of kids) {
+    const a = t * k.speed + k.phase, reach = rad * (1.1 + 1.25 * (0.5 + 0.5 * Math.sin(t * 0.0006 + k.phase * 1.7)));
+    const gx = big.x + Math.cos(a) * reach, gy = big.y + Math.sin(a) * reach * 0.8;
+    k.vx = (k.vx + (gx - k.x) * 0.0016 * dt) * 0.88; k.vy = (k.vy + (gy - k.y) * 0.0016 * dt) * 0.88;
+    k.x += k.vx * dt * 0.06; k.y += k.vy * dt * 0.06;
+  }
+  return [{ x: big.x, y: big.y, r: rad }, ...kids.map(k => ({ x: k.x, y: k.y, r: rad * k.s }))];
+}
+const MAT = { merge: 46, bezel: 0.42, maxBezel: 44, depth: 1.2, ior: 1.5, dispersion: 0.035, rim: 1.35, rimWidth: 1.1, shade: 0.12 };
+
+let frameJs = 0, frames = 0, last = performance.now();
+
+/* ---------- CPU: the current pipeline ---------- */
+if (mode === 'cpu') {
+  const bg = document.getElementById('bg'), ctx = bg.getContext('2d');
+  const field = new GlassField(document.getElementById('drops'), { merge: MAT.merge, fit: true, margin: 56,
+    params: { blur: 0, saturate: 1.25, lum: 1, contrast: 1, bezel: MAT.bezel, maxBezel: MAT.maxBezel, depth: MAT.depth, dispersion: MAT.dispersion, rim: MAT.rim, rimWidth: MAT.rimWidth, shade: MAT.shade } });
+  let seen = 0;
+  const loop = t => {
+    const t0 = performance.now(), dt = Math.min(40, t - last); last = t;
+    const w = Math.round(bg.clientWidth / 2), h = Math.round(bg.clientHeight / 2);
+    if (bg.width !== w) { bg.width = w; bg.height = h; }
+    ctx.globalAlpha = 1; ctx.fillStyle = '#08090d'; ctx.fillRect(0, 0, w, h);
+    for (const b of blobs) {
+      const k = t * 0.00006 * b.s, x = (b.x + Math.sin(k + b.p) * 0.18) * w, y = (b.y + Math.cos(k * 1.3 + b.p) * 0.18) * h, r = b.r * Math.max(w, h);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, b.c); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.globalAlpha = 0.55; ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    }
+    const s = step(t, dt);
+    field.setShapes(s.map(d => ({ x: d.x, y: d.y, w: d.r * 2, h: d.r * 2, r: d.r })));
+    // The field renders in its own frame callback; count its time when a new frame lands.
+    if (field.presented !== seen) { seen = field.presented; frameJs += field.lastFrame.ms; }
+    frameJs += performance.now() - t0; frames++;
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+/* ---------- GPU: one WebGL2 shader ---------- */
+if (mode === 'gpu') {
+  document.body.classList.add('gpu');
+  const cv = document.getElementById('gl'); cv.hidden = false;
+  const gl = cv.getContext('webgl2', { antialias: false, premultipliedAlpha: false });
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  // Headline drawn once into a texture, at the DOM headline's exact position.
+  const tc = document.createElement('canvas'); tc.width = cv.width; tc.height = cv.height;
+  const tx = tc.getContext('2d'), cs = getComputedStyle(title);
+  tx.scale(dpr, dpr); tx.fillStyle = '#f4f5f7'; tx.font = `800 ${cs.fontSize} "Bricolage Grotesque"`; tx.letterSpacing = cs.letterSpacing; tx.textBaseline = 'alphabetic';
+  for (const sp of title.children) { const r = sp.getBoundingClientRect(); tx.fillText(sp.textContent, r.left, r.top + r.height * 0.8); }
+  const vs = `#version 300 es
+  in vec2 p; void main(){ gl_Position = vec4(p, 0., 1.); }`;
+  const fs = `#version 300 es
+  precision highp float;
+  uniform vec2 res; uniform float dpr, time; uniform sampler2D text;
+  uniform vec3 blobs[7]; uniform vec4 blobInfo[7]; uniform vec3 blobCol[7];
+  uniform vec3 drops[4];
+  uniform float k, bezelW, thick, ior, disp, rimK, rimW, shadeK;
+  out vec4 o;
+  vec3 hex(vec3 c){ return c; }
+  vec3 background(vec2 q){
+    vec2 uv = q / res; vec3 c = vec3(8.,9.,13.)/255.;
+    float m = max(res.x, res.y);
+    for (int i = 0; i < 7; i++){
+      float kk = time * 0.00006 * blobInfo[i].w;
+      vec2 ctr = vec2(blobs[i].x + sin(kk + blobInfo[i].x) * 0.18, blobs[i].y + cos(kk * 1.3 + blobInfo[i].x) * 0.18) * res;
+      float a = max(0., 1. - length(q - ctr) / (blobs[i].z * m));
+      c = mix(c, blobCol[i], a * 0.55);
+    }
+    vec4 t = texture(text, vec2(uv.x, 1. - uv.y));
+    return mix(c, t.rgb, t.a);
+  }
+  float sdf(vec2 q){
+    float d = 1e9;
+    for (int i = 0; i < 4; i++){
+      float b = length(q - drops[i].xy) - drops[i].z;
+      float h = max(k - abs(d - b), 0.) / k;
+      d = min(d, b) - h * h * k * 0.25;
+    }
+    return d;
+  }
+  float rimH(float t){ return pow(1. - pow(1. - t, 4.), 0.25); }
+  float refr(float t){
+    if (t >= 1.) return 0.;
+    float e = 0.001, t0 = max(t, e), t1 = min(t0 + e, 1.);
+    float slope = (rimH(t1) - rimH(t0)) / e * thick / bezelW;
+    float inc = atan(slope), rf = asin(sin(inc) / ior);
+    return thick * tan(inc - rf);
+  }
+  void main(){
+    vec2 q = vec2(gl_FragCoord.x, res.y - gl_FragCoord.y) / dpr;   // CSS px, top-left origin
+    vec2 R = res / dpr;
+    float d = sdf(q);
+    vec3 base = background(q * dpr);
+    if (d > 1.5) { o = vec4(base, 1.); return; }
+    vec2 n = normalize(vec2(sdf(q + vec2(.5,0.)) - sdf(q - vec2(.5,0.)), sdf(q + vec2(0.,.5)) - sdf(q - vec2(0.,.5))) + 1e-6);
+    float depth = -d, off = refr(clamp(depth / bezelW, 0., 1.));
+    vec2 sh = -n * off;
+    vec3 c = vec3(background((q + sh * (1. + disp)) * dpr).r, background((q + sh) * dpr).g, background((q + sh * (1. - disp)) * dpr).b);
+    c = mix(c, vec3(1.), 0.05);                                        // tint
+    vec2 L = vec2(cos(radians(-135.)), sin(radians(-135.)));
+    float facing = dot(n, L), lit = pow(max(0., facing), 1.6), back = pow(max(0., -facing), 2.2) * 0.55;
+    float dd = depth * dpr, rw = rimW * dpr, glow = bezelW * 0.55 * dpr, aa = clamp(dd + 1., 0., 1.);
+    float line = exp(-pow(dd / rw, 2.)) * (0.22 + 0.78 * (lit + back));
+    float soft = exp(-dd / glow) * 0.22 * (lit + back * 0.6);
+    float a = min(1., (line + soft) * aa * rimK);
+    float shade = exp(-pow((dd - rw * 1.6) / (rw * 0.9), 2.)) * shadeK * aa * (1. - lit);
+    c = mix(c, vec3(1.), a); c = mix(c, vec3(0.), shade);
+    float cover = clamp(depth * dpr + 0.5, 0., 1.);
+    o = vec4(mix(base, c, cover), 1.);
+  }`;
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(pr));
+  gl.useProgram(pr);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc);
+  const U = n => gl.getUniformLocation(pr, n);
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+  gl.uniform3fv(U('blobs'), blobs.flatMap(b => [b.x, b.y, b.r]));
+  gl.uniform4fv(U('blobInfo'), blobs.flatMap(b => [b.p, 0, 0, b.s]));
+  gl.uniform3fv(U('blobCol'), blobs.flatMap(b => rgb(b.c)));
+  gl.uniform2f(U('res'), cv.width, cv.height); gl.uniform1f(U('dpr'), dpr);
+  gl.uniform1f(U('k'), MAT.merge); gl.uniform1f(U('ior'), MAT.ior); gl.uniform1f(U('disp'), MAT.dispersion);
+  gl.uniform1f(U('rimK'), MAT.rim); gl.uniform1f(U('rimW'), MAT.rimWidth); gl.uniform1f(U('shadeK'), MAT.shade);
+  const loop = t => {
+    const t0 = performance.now(), dt = Math.min(40, t - last); last = t;
+    const s = step(t, dt), minSide = Math.min(...s.map(d => d.r * 2)), bz = Math.max(4, Math.min(MAT.maxBezel, minSide * MAT.bezel));
+    gl.uniform1f(U('bezelW'), bz); gl.uniform1f(U('thick'), bz * MAT.depth); gl.uniform1f(U('time'), t);
+    gl.uniform3fv(U('drops'), s.flatMap(d => [d.x, d.y, d.r]));
+    gl.viewport(0, 0, cv.width, cv.height); gl.drawArrays(gl.TRIANGLES, 0, 3);
+    frameJs += performance.now() - t0; frames++;
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+window.bench = (seconds = 4) => new Promise(r => {
+  frameJs = 0; frames = 0; const t0 = performance.now();
+  setTimeout(() => r({ mode, fps: Math.round(frames / seconds), jsMsPerFrame: +(frameJs / frames).toFixed(2) }), seconds * 1000);
+});
+window.ready = true;
+</script>
