@@ -1,0 +1,81 @@
+/* Inside the glass: a scroll-driven exploded view. Black stage, white type, the object is the only colour. */
+:root {
+  color-scheme: dark;
+  --ink: #f5f5f7; --ink-2: #a1a1a6; --ink-3: #6e6e73; --blue: #2997ff;
+  --display: "Bricolage Grotesque", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --body: "Geist", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #000; color: var(--ink); font: 400 17px/1.55 var(--body); -webkit-font-smoothing: antialiased; }
+body { user-select: none; -webkit-user-select: none; }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font: 500 0.86em var(--mono); color: var(--ink); background: rgb(255 255 255 / 0.08); padding: 0.1em 0.35em; border-radius: 5px; }
+
+.nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; padding-top: calc(18px + env(safe-area-inset-top, 0px)); }
+.logo { font: 800 18px/1 var(--display); color: var(--ink); letter-spacing: -0.03em; }
+.logo span { color: var(--blue); }
+.nav-links { display: flex; gap: 20px; font-size: 14px; }
+.nav-links a { color: var(--ink-2); }
+
+/* The scroll track: tall section, sticky stage inside. */
+.exploded { height: 900vh; position: relative; }
+.sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
+
+.intro, .outro { position: absolute; left: 0; right: 0; text-align: center; padding-inline: 20px; z-index: 5; pointer-events: none; }
+.intro { top: 11vh; }
+.outro { bottom: 8vh; opacity: 0; }
+.outro .links { pointer-events: auto; }
+.eyebrow { font: 600 15px/1 var(--body); color: var(--blue); margin: 0 0 14px; }
+h1 { font: 800 clamp(44px, 8vw, 104px)/0.98 var(--display); letter-spacing: -0.04em; margin: 0; text-wrap: balance; }
+h2 { font: 800 clamp(34px, 5vw, 64px)/1 var(--display); letter-spacing: -0.035em; margin: 0 0 12px; text-wrap: balance; }
+.lede, .outro p { color: var(--ink-2); font-size: clamp(17px, 2vw, 21px); margin: 16px auto 0; max-width: 34em; }
+
+/* 3D stage */
+.scene { position: absolute; inset: 0; perspective: 1800px; perspective-origin: 50% 40%; }
+/* Centred by position, not grid: a 640 px rig in a narrower screen would overflow a grid track. */
+.rig { position: absolute; left: 50%; top: 50%; margin: -200px 0 0 -320px; width: 640px; height: 400px; transform-style: preserve-3d; will-change: transform; }
+.plane { position: absolute; transform-style: preserve-3d; will-change: transform, opacity; }
+.plane canvas { display: block; width: 100%; height: 100%; }
+.plane.backdrop { inset: 0; border-radius: 22px; overflow: hidden; box-shadow: 0 30px 80px rgb(0 0 0 / 0.6); }
+.plane.cap { border-radius: 999px; }
+.plane.cap canvas { border-radius: 999px; }
+.plane.outline canvas { border-radius: 0; }
+.tag {
+  position: absolute; left: -44px; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font: 600 14px/1 var(--mono); color: #000; background: var(--ink); opacity: 0; transition: opacity 0.3s, background 0.3s;
+}
+.plane.backdrop .tag { left: -44px; top: 36px; transform: none; }
+.plane.active .tag { background: var(--blue); color: #fff; }
+
+/* Captions: one at a time, beside the stage on wide screens, below it on narrow ones. */
+.captions { list-style: none; margin: 0; padding: 0; position: absolute; right: max(20px, 6vw); top: 50%; transform: translateY(-50%); width: min(340px, 30vw); z-index: 6; }
+.captions li { position: absolute; top: 0; left: 0; right: 0; transform: translateY(-50%); opacity: 0; transition: opacity 0.35s, transform 0.35s; }
+.captions li.on { opacity: 1; }
+.captions b { display: flex; align-items: center; gap: 10px; font: 700 clamp(24px, 2.4vw, 32px)/1.1 var(--display); letter-spacing: -0.02em; margin-bottom: 10px; }
+.captions b span { font: 600 13px/1 var(--mono); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; flex: none; }
+.captions p { margin: 0; color: var(--ink-2); font-size: 17px; }
+
+@media (max-width: 860px) {
+  .captions { top: auto; bottom: 7vh; right: 20px; left: 20px; width: auto; transform: none; }
+  .captions li { top: auto; bottom: 0; transform: none; }
+  .captions b { font-size: 22px; }
+  .captions p { font-size: 15px; }
+  .scene { perspective-origin: 50% 30%; }
+  .tag { display: none; }
+}
+
+.progress { position: absolute; left: 20px; right: 20px; bottom: 18px; height: 2px; background: rgb(255 255 255 / 0.1); border-radius: 1px; }
+.progress i { display: block; height: 100%; width: 0; background: var(--ink-2); border-radius: 1px; }
+
+/* Reduced motion: the layers as a plain list. */
+.static { max-width: 900px; margin: 0 auto; padding: 120px 20px 80px; }
+.static-item { display: grid; grid-template-columns: minmax(0, 280px) 1fr; gap: 24px; align-items: center; padding: 20px 0; border-bottom: 1px solid rgb(255 255 255 / 0.1); }
+.static-item canvas { width: 100%; height: auto; border-radius: 16px; }
+@media (max-width: 640px) { .static-item { grid-template-columns: 1fr; } }
+.static-item li { list-style: none; }
+.static-item b { display: flex; gap: 10px; align-items: center; font: 700 22px/1.2 var(--display); margin-bottom: 8px; }
+.static-item b span { font: 600 13px/1 var(--mono); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--blue); color: #fff; }
+.static-item p { margin: 0; color: var(--ink-2); }

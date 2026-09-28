@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Inside the glass</title>
+<meta name="description" content="An exploded view of amazing-glass: the seven layers behind one glass element, from the page behind it to the rim light.">
+<meta name="theme-color" content="#000000">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<nav class="nav">
+  <a class="logo" href="../">amazing<span>-</span>glass</a>
+  <span class="nav-links"><a href="../">Demo</a><a href="../guide/">Guide</a><a href="https://github.com/tomacco/amazing-glass">GitHub</a></span>
+</nav>
+
+<main>
+  <section class="exploded" id="exploded">
+    <div class="sticky">
+      <div class="intro" id="intro">
+        <p class="eyebrow">Inside the glass</p>
+        <h1>One element.<br>Seven layers.</h1>
+        <p class="lede">Scroll to take it apart.</p>
+      </div>
+
+      <div class="scene" id="scene" aria-hidden="true">
+        <div class="rig" id="rig">
+          <!-- Planes, bottom to top. Filled with canvases by main.ts. -->
+          <div class="plane backdrop" data-step="0"><span class="tag">1</span></div>
+          <div class="plane cap" data-step="1"><span class="tag">2</span></div>
+          <div class="plane cap" data-step="2"><span class="tag">3</span></div>
+          <div class="plane cap chan" data-step="3" data-chan="r"><span class="tag">4</span></div>
+          <div class="plane cap chan" data-step="3" data-chan="g"></div>
+          <div class="plane cap chan" data-step="3" data-chan="b"></div>
+          <div class="plane cap" data-step="4"><span class="tag">5</span></div>
+          <div class="plane cap" data-step="5"><span class="tag">6</span></div>
+          <div class="plane cap outline" data-step="6"><span class="tag">7</span></div>
+          <div class="plane cap final"></div>
+        </div>
+      </div>
+
+      <ol class="captions" id="captions">
+        <li><b><span>1</span> The page behind</b><p>Everything the glass sits on: text, photos, your app. The browser hands it to the filter as <code>SourceGraphic</code>.</p></li>
+        <li><b><span>2</span> Frost</b><p><code>feGaussianBlur</code> softens it. About 3 px here; regular glass uses 10.</p></li>
+        <li><b><span>3</span> The refraction map</b><p>Computed once in JavaScript. Each pixel stores how far light bends there: red for sideways, green for up and down, grey for none. Flat middle, steep rim.</p></li>
+        <li><b><span>4</span> Three bends</b><p><code>feDisplacementMap</code> moves the pixels, once per colour at slightly different strength. Red bends most. That is the rainbow at the rim, turned up here so you can see it.</p></li>
+        <li><b><span>5</span> Colour grade</b><p><code>feColorMatrix</code> and <code>feComponentTransfer</code>: more saturation, less contrast. The part we fitted against Apple.</p></li>
+        <li><b><span>6</span> Tint and rim light</b><p>Plain CSS on top: a background colour, and a highlight image that is brightest where the rim faces the light.</p></li>
+        <li><b><span>7</span> The shape</b><p><code>border-radius</code> clips all of it to a capsule. Change the size and steps 3 and 6 are recomputed. Nothing else is.</p></li>
+      </ol>
+
+      <div class="outro" id="outro">
+        <h2>Back to one element.</h2>
+        <p>The browser redraws steps 1 to 5 on the GPU as the page moves. JavaScript only runs when the size changes.</p>
+        <p class="links"><a href="../">See it live</a> · <a href="../guide/">Read the guide</a></p>
+      </div>
+
+      <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+    </div>
+  </section>
+
+  <section class="static" id="static" hidden>
+    <h2>The seven layers</h2>
+    <p>Motion is reduced on this device, so here they are in order.</p>
+    <div id="static-list"></div>
+  </section>
+</main>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>

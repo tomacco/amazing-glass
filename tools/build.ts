@@ -61,7 +61,7 @@ if (only === 'lib') process.exit(0);
 
 // ---- sites: apps/<name>/index.html + main.ts -> site/<name>/
 rmSync(root + 'site', { recursive: true, force: true });
-for (const app of ['demo', 'guide']) {
+for (const app of ['demo', 'guide', 'how']) {
   const dir = root + `apps/${app}/`;
   const out = root + (app === 'demo' ? 'site/' : `site/${app}/`);
   mkdirSync(out, { recursive: true });

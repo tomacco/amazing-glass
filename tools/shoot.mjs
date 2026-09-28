@@ -31,7 +31,7 @@ try {
   if (+w < 500) await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   // CPU=4 slows the CPU fourfold, roughly a mid-range phone.
   if (process.env.CPU) await send('Emulation.setCPUThrottlingRate', { rate: +process.env.CPU });
-  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }, { name: 'prefers-color-scheme', value: scheme }] });
+  await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: process.env.REDUCED ? 'reduce' : 'no-preference' }, { name: 'prefers-color-scheme', value: scheme }] });
   await send('Page.enable');
   await send('Page.navigate', { url });
   await sleep(1500);

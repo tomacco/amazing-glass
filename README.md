@@ -6,7 +6,7 @@
 
 Web components for plain HTML, React and Vue. Real refraction, tuned against Apple's own renderer until the average pixel was off by about 2 out of 255.
 
-[Live demo](https://tomacco.github.io/amazing-glass/) · [Guide](https://tomacco.github.io/amazing-glass/guide/) · [API](docs/API.md) · [For AI agents](AGENTS.md)
+[Live demo](https://tomacco.github.io/amazing-glass/) · [How it works](https://tomacco.github.io/amazing-glass/how/) · [Guide](https://tomacco.github.io/amazing-glass/guide/) · [API](docs/API.md) · [For AI agents](AGENTS.md)
 
 <img src="docs/img/hero.jpg" alt="The amazing-glass demo: liquid glass drops merging over the headline &quot;Glass that bends the page behind it.&quot;" width="100%">
 
