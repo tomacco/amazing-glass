@@ -343,3 +343,60 @@ ag-toolbar-group { display: flex; align-items: center; height: 48px; padding: 0 
 @media (prefers-reduced-motion: reduce) {
   ag-button, .ag-switch-knob, .ag-slider-thumb, .ag-segmented-pill, .ag-tab-pill, ag-sheet { transition-duration: 0.01s !important; }
 }
+
+/* Looks. Token overrides under data-ag-look, paired with the optics in src/core/looks.ts.
+   "system" is the fitted default and needs no rules; it exists so a subtree can opt back out. */
+
+/* Light and Space: clear slabs with a coloured film, warm light, perfect circles and plain
+   rectangles, slow motion. */
+[data-ag-look="light-space"] {
+  --ag-accent: #ff8a3d;
+  --ag-glass-regular-light: rgb(255 246 238 / 0.32);
+  --ag-glass-regular-dark: rgb(24 16 40 / 0.3);
+  --ag-glass-clear: rgb(255 240 250 / 0.1);
+  --ag-glass-shadow: 0 0 0 1px rgb(255 214 236 / 0.22), 0 24px 60px -28px rgb(255 120 80 / 0.45);
+  --ag-radius: 6px;
+  --ag-radius-card: 6px;
+  --ag-radius-row: 6px;
+  --ag-radius-sheet: 10px;
+  --ag-spring: var(--ag-spring-soft);
+  --ag-ease: cubic-bezier(0.25, 0.6, 0.15, 1);
+}
+
+/* Glass Chain: cold crystal, hard corners. */
+[data-ag-look="glass-chain"] {
+  --ag-accent: #4fd6ff;
+  --ag-glass-regular-light: rgb(230 248 255 / 0.22);
+  --ag-glass-regular-dark: rgb(8 24 40 / 0.28);
+  --ag-glass-clear: rgb(220 245 255 / 0.06);
+  --ag-glass-shadow: 0 0 0 1px rgb(200 240 255 / 0.4);
+  --ag-radius: 0px;
+  --ag-radius-card: 0px;
+  --ag-radius-row: 0px;
+  --ag-radius-sheet: 0px;
+}
+
+/* Lux Nova: stained panes held in dark lead. */
+[data-ag-look="lux-nova"] {
+  --ag-accent: #1f4fd8;
+  --ag-glass-regular-light: rgb(40 70 200 / 0.42);
+  --ag-glass-regular-dark: rgb(120 20 40 / 0.45);
+  --ag-glass-clear: rgb(200 40 60 / 0.28);
+  --ag-glass-shadow: 0 0 0 3px #17131d;
+  --ag-radius: 18px;
+  --ag-radius-card: 18px;
+}
+
+/* Bauhaus: flat planes in primary colour, square corners, no light on the edge. */
+[data-ag-look="bauhaus"] {
+  --ag-accent: #e5322d;
+  --ag-glass-regular-light: rgb(255 210 0 / 0.55);
+  --ag-glass-regular-dark: rgb(20 60 200 / 0.5);
+  --ag-glass-clear: rgb(229 50 45 / 0.4);
+  --ag-glass-shadow: none;
+  --ag-radius: 0px;
+  --ag-radius-card: 0px;
+  --ag-radius-row: 0px;
+  --ag-radius-sheet: 0px;
+}
+[data-ag-look="bauhaus"] .ag-glass > .ag-refract { background-image: none !important; }

@@ -22,7 +22,72 @@ function layerRidge(ctx: CanvasRenderingContext2D, w: number, h: number, base: n
   ctx.fill();
 }
 
-export type SceneName = 'dusk' | 'bloom' | 'citrus' | 'chart';
+// Light and Space palettes for the skyspace: top, middle, low, horizon. The aperture drifts
+// through them slowly, the way a Turrell sky does at dusk.
+const SKIES = [
+  ['#1a1446', '#6b3fd1', '#ff6a88', '#ffb25c'],
+  ['#2a0f3d', '#c02a8a', '#ff5f6d', '#ffc36b'],
+  ['#061a40', '#1f5fd1', '#39c6ff', '#b9f0ff'],
+];
+const hex = (c: string) => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+const mix = (a: string, b: string, k: number) => { const x = hex(a), y = hex(b); return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * k)).join(',')})`; };
+/** The sky colours at time t (ms), easing from one palette to the next every 14 s. */
+export function skyAt(t: number) {
+  const f = (t / 14000) % SKIES.length, i = Math.floor(f), k = 0.5 - 0.5 * Math.cos((f - i) * Math.PI);
+  const a = SKIES[i], b = SKIES[(i + 1) % SKIES.length];
+  return a.map((c, j) => mix(c, b[j], k));
+}
+
+/**
+ * A Light and Space room: a dim wall, a rectangle of sky cut into it, a disc of light and one
+ * person standing in front of it. `align` puts the opening in the middle or to the right.
+ */
+export function skyspace(ctx: CanvasRenderingContext2D, w: number, h: number, t = 0, align: 'center' | 'right' | 'top' = 'center') {
+  const sky = skyAt(t);
+  const ax = align === 'right' ? w * 0.56 : w * 0.16, aw = align === 'right' ? w * 0.36 : w * 0.68;
+  // 'top' is for phones: a band of sky above the text.
+  const ay = h * (align === 'top' ? 0.09 : 0.1), ah = h * (align === 'top' ? 0.15 : 0.62), floor = ay + ah + h * (align === 'top' ? 0.02 : 0.08);
+  // The wall takes a little of the sky's colour.
+  ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 0, w, h);
+  const spill = ctx.createRadialGradient(ax + aw / 2, ay + ah / 2, 0, ax + aw / 2, ay + ah / 2, Math.max(w, h) * 0.7);
+  spill.addColorStop(0, sky[2]); spill.addColorStop(1, 'rgba(12,10,18,0)');
+  ctx.globalAlpha = 0.28; ctx.fillStyle = spill; ctx.fillRect(0, 0, w, h); ctx.globalAlpha = 1;
+  // The opening.
+  const g = ctx.createLinearGradient(0, ay, 0, ay + ah);
+  g.addColorStop(0, sky[0]); g.addColorStop(0.45, sky[1]); g.addColorStop(0.8, sky[2]); g.addColorStop(1, sky[3]);
+  ctx.save(); ctx.shadowColor = sky[2]; ctx.shadowBlur = Math.min(w, h) * 0.12;
+  ctx.fillStyle = g; ctx.fillRect(ax, ay, aw, ah); ctx.restore();
+  // A disc of light, low in the opening.
+  const r = Math.min(aw, ah) * 0.2, cx = ax + aw * 0.62, cy = ay + ah * 0.66;
+  const disc = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 2.4);
+  disc.addColorStop(0, 'rgba(255,248,232,1)'); disc.addColorStop(0.36, 'rgba(255,232,200,0.95)');
+  disc.addColorStop(0.42, 'rgba(255,190,150,0.45)'); disc.addColorStop(1, 'rgba(255,160,140,0)');
+  ctx.save(); ctx.beginPath(); ctx.rect(ax, ay, aw, ah); ctx.clip();
+  ctx.fillStyle = disc; ctx.fillRect(ax, ay, aw, ah);
+  // Thin horizontal lines, like coated glass catching the light.
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1;
+  for (let y = ay + 18; y < ay + ah; y += 18) { ctx.beginPath(); ctx.moveTo(ax, y + 0.5); ctx.lineTo(ax + aw, y + 0.5); ctx.stroke(); }
+  ctx.restore();
+  // The floor reflects the opening, faintly.
+  const fl = ctx.createLinearGradient(0, floor, 0, h);
+  fl.addColorStop(0, mix(hexOf(sky[2]), '#0c0a12', 0.75)); fl.addColorStop(1, '#0c0a12');
+  ctx.fillStyle = fl; ctx.fillRect(0, floor, w, h - floor);
+  // On phones the room ends under the band, so text below stays on a dark wall.
+  if (align === 'top') { const f = ctx.createLinearGradient(0, floor, 0, floor + h * 0.1); f.addColorStop(0, 'rgba(12,10,18,0)'); f.addColorStop(1, '#0c0a12'); ctx.fillStyle = f; ctx.fillRect(0, floor, w, h - floor); }
+  // One person, seen from behind, in the light.
+  const ph = Math.min(h * 0.2, 150, ah * 0.6), px = ax + aw / 2, py = floor + ph * 0.06;
+  ctx.fillStyle = '#08060c';
+  const u = ph / 100, P = (pts: number[][]) => { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(px + x * u, py + y * u) : ctx.moveTo(px + x * u, py + y * u)); ctx.closePath(); ctx.fill(); };
+  ctx.beginPath(); ctx.ellipse(px, py - 90 * u, 6 * u, 7.2 * u, 0, 0, 7); ctx.fill();
+  // Shoulders and coat, arms close to the body, then two legs with a gap.
+  P([[-3, -83], [3, -83], [13, -78], [15, -60], [14, -40], [11, -38], [10, -46], [8, -38], [-8, -38], [-10, -46], [-11, -38], [-14, -40], [-15, -60], [-13, -78]]);
+  P([[-8, -39], [-0.8, -39], [-1.5, 0], [-7, 0]]);
+  P([[0.8, -39], [8, -39], [7, 0], [1.5, 0]]);
+  ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.ellipse(px, py + 2, ph * 0.16, ph * 0.025, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+}
+const hexOf = (rgb: string) => '#' + (rgb.match(/\d+/g) ?? ['0', '0', '0']).map(n => Number(n).toString(16).padStart(2, '0')).join('');
+
+export type SceneName = 'dusk' | 'bloom' | 'citrus' | 'chart' | 'skyspace' | 'crystal' | 'rose' | 'planes';
 
 export const scenes: Record<SceneName, (ctx: CanvasRenderingContext2D, w: number, h: number, seed?: number) => void> = {
   // Alpine dusk: bright sky over dark ridges, a lake with a reflection.
@@ -105,6 +170,60 @@ export const scenes: Record<SceneName, (ctx: CanvasRenderingContext2D, w: number
         ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(a) * r * 0.85, y + Math.sin(a) * r * 0.85); ctx.stroke();
       }
     }
+  },
+
+  // Light and Space, still.
+  skyspace(ctx: CanvasRenderingContext2D, w: number, h: number, seed = 0) { skyspace(ctx, w, h, seed * 1000); },
+
+  // Glass Chain: a cold crystal, facets around a bright core.
+  crystal(ctx: CanvasRenderingContext2D, w: number, h: number, seed = 5) {
+    const rand = rng(seed);
+    const bg = ctx.createLinearGradient(0, 0, w, h);
+    bg.addColorStop(0, '#04121f'); bg.addColorStop(1, '#0d2a44');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+    const cx = w * 0.55, cy = h * 0.5, cols = ['#4fd6ff', '#a7f0ff', '#2a7bd8', '#d8fbff', '#7a6cff', '#1f9fbf'];
+    for (let i = 0; i < 26; i++) {
+      const a = (i / 26) * Math.PI * 2 + rand() * 0.2, r1 = Math.min(w, h) * (0.1 + rand() * 0.15), r2 = Math.max(w, h) * (0.35 + rand() * 0.4);
+      ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+      ctx.lineTo(cx + Math.cos(a + 0.13) * r2, cy + Math.sin(a + 0.13) * r2);
+      ctx.lineTo(cx + Math.cos(a + 0.26) * r1 * 1.4, cy + Math.sin(a + 0.26) * r1 * 1.4); ctx.closePath();
+      ctx.globalAlpha = 0.35 + rand() * 0.5; ctx.fillStyle = cols[i % cols.length]; ctx.fill();
+      ctx.globalAlpha = 0.8; ctx.strokeStyle = '#e6fdff'; ctx.lineWidth = 1; ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  },
+
+  // Lux Nova: a rose window, coloured panes held in dark lead.
+  rose(ctx: CanvasRenderingContext2D, w: number, h: number, seed = 9) {
+    const rand = rng(seed);
+    ctx.fillStyle = '#17131d'; ctx.fillRect(0, 0, w, h);
+    const cols = ['#1f4fd8', '#c8203a', '#e8b21c', '#1d8f5a', '#6a2bb8', '#2a6fe8', '#d83a2a'];
+    const cell = 34;
+    for (let y = 0; y < h; y += cell) for (let x = 0; x < w; x += cell) {
+      ctx.fillStyle = cols[Math.floor(rand() * cols.length)];
+      ctx.globalAlpha = 0.75 + rand() * 0.25;
+      ctx.fillRect(x + 3, y + 3, cell - 6, cell - 6);
+    }
+    ctx.globalAlpha = 1;
+    const cx = w * 0.5, cy = h * 0.5, R = Math.min(w, h) * 0.42;
+    ctx.strokeStyle = '#17131d'; ctx.lineWidth = 7;
+    for (let k = 1; k <= 3; k++) { ctx.beginPath(); ctx.arc(cx, cy, (R * k) / 3, 0, 7); ctx.stroke(); }
+    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.stroke(); }
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.4);
+    glow.addColorStop(0, 'rgba(255,240,200,0.35)'); glow.addColorStop(1, 'rgba(255,240,200,0)');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
+  },
+
+  // Bauhaus: flat planes in primary colour that overlap on cream paper.
+  planes(ctx: CanvasRenderingContext2D, w: number, h: number) {
+    ctx.fillStyle = '#efe8d8'; ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = '#e5322d'; ctx.fillRect(w * 0.08, h * 0.16, w * 0.42, h * 0.5);
+    ctx.fillStyle = '#ffd200'; ctx.beginPath(); ctx.arc(w * 0.58, h * 0.46, Math.min(w, h) * 0.3, 0, 7); ctx.fill();
+    ctx.fillStyle = '#1e4fc8'; ctx.fillRect(w * 0.36, h * 0.58, w * 0.52, h * 0.28);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#141414';
+    ctx.fillRect(w * 0.08, h * 0.9, w * 0.84, 4); ctx.fillRect(w * 0.9, h * 0.08, 4, h * 0.82);
   },
 
   // Test card: stripes and type, the harshest check for refraction quality.

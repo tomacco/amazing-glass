@@ -432,6 +432,65 @@ class CpuRefraction {
   }
 }
 
+// src/core/looks.ts
+var LOOKS2 = {
+  system: { name: "System", origin: "The fitted material, as Apple draws it.", params: {} },
+  "light-space": {
+    name: "Light and Space",
+    origin: "Southern California, 1960s. Coated glass, resin discs and rooms made of light.",
+    params: {
+      regular: { blur: 4, saturate: 1.6, contrast: 0.95, dispersion: 0.09, rim: 0.5, rimWidth: 0.6, light: -90 },
+      clear: { blur: 1.2, saturate: 1.35, dispersion: 0.12, rim: 0.6, rimWidth: 0.6, light: -90 },
+      lens: { dispersion: 0.2, rim: 1.4, light: -90 }
+    }
+  },
+  "glass-chain": {
+    name: "Glass Chain",
+    origin: "Berlin, 1919. Bruno Taut and the crystal architecture letters.",
+    params: {
+      regular: { blur: 2, bezel: 0.18, depth: 2.2, dispersion: 0.22, rim: 1.1, rimWidth: 0.5, light: -60 },
+      clear: { blur: 0, bezel: 0.18, depth: 2.2, dispersion: 0.26, rim: 1.1, rimWidth: 0.5, light: -60 },
+      lens: { bezel: 0.2, depth: 1.8, dispersion: 0.3, light: -60 }
+    }
+  },
+  "lux-nova": {
+    name: "Lux Nova",
+    origin: "Saint-Denis, 1140s. Abbot Suger fills the choir with coloured light.",
+    params: {
+      regular: { blur: 6, saturate: 2.4, lum: 1.05, depth: 0.6, dispersion: 0, rim: 0.3, light: -100 },
+      clear: { blur: 3, saturate: 2.2, depth: 0.6, dispersion: 0, rim: 0.3, light: -100 },
+      lens: { dispersion: 0.04, light: -100 }
+    }
+  },
+  bauhaus: {
+    name: "Bauhaus",
+    origin: "Dessau, 1920s. Albers and Moholy-Nagy: flat planes that overlap and stay readable.",
+    params: {
+      regular: { blur: 0, saturate: 1, contrast: 1, depth: 0.15, dispersion: 0, rim: 0, shade: 0 },
+      clear: { blur: 0, saturate: 1, contrast: 1, depth: 0.15, dispersion: 0, rim: 0, shade: 0 },
+      lens: { depth: 0.4, dispersion: 0, rim: 0.4 }
+    }
+  }
+};
+function lookFor2(el) {
+  const name = el.closest("[data-ag-look]")?.dataset.agLook;
+  return name ? LOOKS2[name] : undefined;
+}
+var listeners2 = new Set;
+function onLookChange(fn) {
+  listeners2.add(fn);
+  return () => {
+    listeners2.delete(fn);
+  };
+}
+function personalize2(look, root = document.documentElement) {
+  if (look === "system" && root === document.documentElement)
+    delete root.dataset.agLook;
+  else
+    root.dataset.agLook = look;
+  listeners2.forEach((fn) => fn());
+}
+
 // src/core/glass.ts
 var uid = 0;
 
@@ -449,6 +508,7 @@ class Glass2 {
   live = false;
   ro;
   stopRefresh;
+  stopLook;
   id = `ag-${++uid}`;
   constructor(el, opts = {}) {
     this.el = el;
@@ -467,10 +527,15 @@ class Glass2 {
     this.ro = new ResizeObserver(() => this.schedule());
     this.ro.observe(el);
     this.stopRefresh = onRefresh(() => this.onRefresh());
+    this.stopLook = onLookChange(() => this.schedule());
     this.schedule();
   }
   get currentParams() {
-    return this.params;
+    return this.resolve();
+  }
+  resolve() {
+    const look = this.el.isConnected ? lookFor2(this.el)?.params[this.variant] : undefined;
+    return look ? resolveParams2(this.variant, { ...look, ...this.overrides }) : this.params;
   }
   setVariant(variant) {
     this.variant = variant;
@@ -516,7 +581,7 @@ class Glass2 {
       this.schedule();
     if (!w || !h)
       return;
-    const p = this.params;
+    const p = this.resolve();
     this.maps = roundedRectMaps(w, h, this.radius(w, h), p, this.live);
     this.layer.style.backgroundImage = `url(${this.maps.specular})`;
     if (supportsRefraction2) {
@@ -540,12 +605,13 @@ class Glass2 {
         this.el.dataset.tone = t;
     }
     if (this.cpu && this.maps)
-      this.cpu.render(this.maps.raw, this.el.offsetWidth, this.el.offsetHeight, this.params.dispersion);
+      this.cpu.render(this.maps.raw, this.el.offsetWidth, this.el.offsetHeight, this.resolve().dispersion);
   }
   destroy() {
     cancelAnimationFrame(this.frame);
     this.ro.disconnect();
     this.stopRefresh();
+    this.stopLook();
     this.filter?.remove();
     this.cpu?.destroy();
     this.layer.remove();
@@ -1142,6 +1208,17 @@ var FEATURES2 = [
     verified: "Chrome desktop and mobile emulation",
     notes: "Bends only the backdrop canvas you pass, not page elements above it. Falls back to the SVG path without WebGL2.",
     available: () => webgl2Available2()
+  },
+  {
+    id: "looks",
+    name: "Looks: personalize() and data-ag-look",
+    level: "experimental",
+    chromium: "Full",
+    safari: "Tokens and fallback material",
+    firefox: "Tokens and fallback material",
+    verified: "Chrome desktop",
+    notes: "Changes Glass elements and the CSS tokens. A GlassField keeps the params it was given; call setParams on it.",
+    available: () => true
   }
 ];
 function featureStatus2(id) {
@@ -1167,4 +1244,4 @@ function glass2(node, options = {}) {
   };
 }
 
-export { VARIANTS2, resolveParams2, roundedRect2, smoothMin2, refractOffset2, rimProfile2, supportsRefraction2, registerBackdrop2, backdropChanged2, luminanceAt2, refresh2, Glass2, webgl2Available2, GlassField2, LEVELS2, FEATURES2, featureStatus2, glass2 };
+export { VARIANTS2, resolveParams2, roundedRect2, smoothMin2, refractOffset2, rimProfile2, supportsRefraction2, registerBackdrop2, backdropChanged2, luminanceAt2, refresh2, LOOKS2, lookFor2, personalize2, Glass2, webgl2Available2, GlassField2, LEVELS2, FEATURES2, featureStatus2, glass2 };

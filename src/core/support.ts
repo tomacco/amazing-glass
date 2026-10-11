@@ -74,6 +74,13 @@ export const FEATURES: Feature[] = [
     notes: 'Bends only the backdrop canvas you pass, not page elements above it. Falls back to the SVG path without WebGL2.',
     available: () => webgl2Available(),
   },
+  {
+    id: 'looks', name: 'Looks: personalize() and data-ag-look', level: 'experimental',
+    chromium: 'Full', safari: 'Tokens and fallback material', firefox: 'Tokens and fallback material',
+    verified: 'Chrome desktop',
+    notes: 'Changes Glass elements and the CSS tokens. A GlassField keeps the params it was given; call setParams on it.',
+    available: () => true,
+  },
 ];
 
 /** Level and availability of one feature in the running browser. */

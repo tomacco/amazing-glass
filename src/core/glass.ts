@@ -3,6 +3,7 @@ import { roundedRectMaps, type GlassMaps } from './maps';
 import { createFilter, cssBackdrop, supportsRefraction, updateFilter } from './filter';
 import { measureTone, onRefresh } from './backdrop';
 import { CpuRefraction } from './fallback';
+import { lookFor, onLookChange } from './looks';
 
 export type GlassTone = 'auto' | 'light' | 'dark';
 
@@ -38,6 +39,7 @@ export class Glass {
   private live = false;
   private ro: ResizeObserver;
   private stopRefresh: () => void;
+  private stopLook: () => void;
   private readonly id = `ag-${++uid}`;
 
   constructor(el: HTMLElement, opts: GlassOptions = {}) {
@@ -57,10 +59,17 @@ export class Glass {
     this.ro.observe(el);
     // Scrolls, resizes and backdrop repaints: re-check tone and the CPU fallback.
     this.stopRefresh = onRefresh(() => this.onRefresh());
+    this.stopLook = onLookChange(() => this.schedule());
     this.schedule();
   }
 
-  get currentParams(): Readonly<GlassParams> { return this.params; }
+  get currentParams(): Readonly<GlassParams> { return this.resolve(); }
+
+  /** Preset, then the look in force (src/core/looks.ts), then this instance's overrides. */
+  private resolve() {
+    const look = this.el.isConnected ? lookFor(this.el)?.params[this.variant] : undefined;
+    return look ? resolveParams(this.variant, { ...look, ...this.overrides }) : this.params;
+  }
 
   setVariant(variant: GlassVariant) {
     this.variant = variant;
@@ -107,7 +116,7 @@ export class Glass {
     const w = Math.round(this.el.offsetWidth), h = Math.round(this.el.offsetHeight);
     if (this.live) this.schedule();
     if (!w || !h) return;
-    const p = this.params;
+    const p = this.resolve();
     this.maps = roundedRectMaps(w, h, this.radius(w, h), p, this.live);
     this.layer.style.backgroundImage = `url(${this.maps.specular})`;
     if (supportsRefraction) {
@@ -129,13 +138,14 @@ export class Glass {
       const t = measureTone(this.el);
       if (t && this.el.dataset.tone !== t) this.el.dataset.tone = t;
     }
-    if (this.cpu && this.maps) this.cpu.render(this.maps.raw, this.el.offsetWidth, this.el.offsetHeight, this.params.dispersion);
+    if (this.cpu && this.maps) this.cpu.render(this.maps.raw, this.el.offsetWidth, this.el.offsetHeight, this.resolve().dispersion);
   }
 
   destroy() {
     cancelAnimationFrame(this.frame);
     this.ro.disconnect();
     this.stopRefresh();
+    this.stopLook();
     this.filter?.remove();
     this.cpu?.destroy();
     this.layer.remove();

@@ -5,14 +5,22 @@ text an AI agent writes for this repo.
 
 ## The register
 
-Simple, bold, a little funny. Short sentences. Say the thing, then show it.
-Talk like an engineer who is proud of the work and slightly amused by it.
+Calm and exact, with colour turned up. The model is the Light and Space movement: a quiet
+room, one strong light, clean lines, and a person standing in it.
 
-- Lead with the claim, then the proof. A number beats an adjective.
+- Light first, then shape, then the person. Say what the reader will see, in the order they
+  will see it, and end on them: "you", "your finger", "your page".
+- Short sentences with room around them. One idea per sentence. A long sentence is allowed
+  when it describes something moving.
+- Intensity comes from precision and colour words used exactly ("amber", "a coloured edge"),
+  never from volume. No exclamation marks, no superlatives.
+- Warmth over jokes. A dry, understated line is fine; a punchline is not.
+- Lead with what is familiar, then the change. The controls are Apple's; the light is yours.
 - Every claim must survive a five-second check. If a reader can falsify it by opening
   DevTools, cut it or make it exact.
-- Humour comes from understatement and plain facts, never from exclamation marks.
-- Admit limits in the same breath as the brag. It makes the brag believable.
+- Admit limits in the same breath as the claim. It makes the claim believable.
+
+Headlines are two short sentences at most, often a pair: "Glass you know. Light you choose."
 
 ## Banned
 
@@ -46,3 +54,6 @@ So this repo uses none.
 - "Liquid Glass" is Apple's name for Apple's material. Use it only to refer to Apple's work.
   Our thing is "amazing-glass" or "the glass".
 - Say "not affiliated with Apple" wherever Apple is mentioned at length.
+- A look is named after its source and credited where it appears: "Light and Space",
+  "Glass Chain", "Lux Nova" (Saint-Denis), "Bauhaus". Describe each with a place and a date,
+  then what the glass does. Never claim an artist's endorsement; looks are homages.

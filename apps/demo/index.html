@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>amazing-glass</title>
-<meta name="description" content="Glass that bends the page behind it. Liquid glass web components for HTML, React and Vue, tuned pixel by pixel against Apple's own renderer.">
+<meta name="description" content="Glass you know, light you choose. Web components for HTML, React and Vue, fitted pixel by pixel to Apple's Liquid Glass, with looks you can make your own.">
 <meta name="theme-color" content="#08090d">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@200;300;400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="amazing-glass.css">
 <link rel="stylesheet" href="app.css">
 </head>
@@ -25,14 +25,14 @@
     </span>
   </nav>
   <div class="hero-copy wrap">
-    <h1 class="hero-title" aria-label="Glass that bends the page behind it.">
-      <span>Glass that</span>
-      <span>bends the page</span>
-      <span>behind it.</span>
+    <h1 class="hero-title" aria-label="Glass you know. Light you choose.">
+      <span>Glass you know.</span>
+      <span>Light you</span>
+      <span>choose.</span>
     </h1>
-    <p class="hero-sub">Web components for plain HTML, React and Vue. We tuned them against Apple's own renderer until the average pixel was off by about 2 out of 255.</p>
+    <p class="hero-sub">Web components for HTML, React and Vue. They match Apple's Liquid Glass to about 2 values out of 255 per pixel. One more line gives them a look of your own.</p>
     <div class="hero-actions">
-      <ag-button variant="prominent" size="large" id="cta-proof">See the proof</ag-button>
+      <ag-button variant="prominent" size="large" id="cta-look">See it in Light and Space</ag-button>
       <ag-button size="large" id="cta-code">Get the code</ag-button>
     </div>
   </div>
@@ -42,11 +42,37 @@
 </header>
 
 <main>
-  <section class="chapter" id="blur">
+  <section class="chapter" id="looks">
     <div class="wrap chapter-head reveal">
       <span class="kicker">01</span>
+      <h2>One material. Your light.</h2>
+      <p>Every control here starts as Apple draws it, fitted to the pixel. A look changes what the light does on top: the tint, the coloured edge, the corners, the pace. Set it once and every glass element follows.</p>
+    </div>
+    <div class="wrap room-row reveal-y">
+      <div class="room">
+        <canvas id="room" aria-label="A dim room with a rectangle of evening sky cut into the wall, a disc of light, and one person standing in front of it"></canvas>
+        <ag-glass class="room-card" variant="clear">
+          <span class="room-label">Light and Space</span>
+          <div class="row"><span>Warm light</span><ag-switch checked></ag-switch></div>
+          <ag-slider value="64" min-icon="sunSmall" max-icon="sun"></ag-slider>
+        </ag-glass>
+        <ag-glass class="room-disc" variant="clear" aria-hidden="true"></ag-glass>
+      </div>
+      <div class="room-text">
+        <p>Southern California, the 1960s. Larry Bell coated glass cubes until their edges held colour. Robert Irwin hung discs that dissolved into the wall. James Turrell cut openings into ceilings and let the sky in.</p>
+        <p>Clean lines, circles and rectangles, and a person standing in the light. Calm, with colour turned all the way up. It is the first look we built.</p>
+        <p><code>&lt;html data-ag-look="light-space"&gt;</code></p>
+        <ag-button variant="prominent" data-try="light-space">Light the page</ag-button>
+        <ag-button data-try="system">Back to System</ag-button>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="blur">
+    <div class="wrap chapter-head reveal">
+      <span class="kicker">02</span>
       <h2>Blur is not glass.</h2>
-      <p>Most "glass" on the web is a blurred rectangle. Real glass has a thickness. Light hits the curved rim, bends, and drags the background along with it. Watch the stripes at the edges.</p>
+      <p>Most "glass" on the web is a blurred rectangle. Real glass has thickness. Light meets the curved rim, bends, and carries the background with it. Watch the stripes at the edges.</p>
     </div>
     <div class="marquee-stage reveal-y">
       <div class="marquee" aria-hidden="true">
@@ -69,7 +95,7 @@
 
   <section class="chapter" id="physics">
     <div class="wrap chapter-head reveal">
-      <span class="kicker">02</span>
+      <span class="kicker">03</span>
       <h2>Light bends at the edge.</h2>
       <p>For every pixel we take the slope of the rim, bend the view ray with Snell's law, and store how far it moved. Chromium runs that map as a filter on whatever is behind the element. Three passes with slightly different strength, one per colour, give the thin rainbow at the rim. <a href="how/">Take one apart</a>.</p>
     </div>
@@ -94,7 +120,7 @@
 
   <section class="chapter" id="proof">
     <div class="wrap chapter-head reveal">
-      <span class="kicker">03</span>
+      <span class="kicker">04</span>
       <h2>We checked our work against Apple's.</h2>
       <p>A small SwiftUI app draws Apple's <code>.glassEffect</code> over the same pictures, at the same sizes. We screenshot both, compare every pixel, and let a search nudge our parameters until the difference stops shrinking. Drag the line.</p>
     </div>
@@ -119,9 +145,9 @@
 
   <section class="chapter" id="controls">
     <div class="wrap chapter-head reveal">
-      <span class="kicker">04</span>
-      <h2>Controls that notice your finger.</h2>
-      <p>Knobs are solid at rest and turn into lenses while you hold them. Menus grow out of their buttons. Selections stretch on the way to where you tapped. Go on, touch everything.</p>
+      <span class="kicker">05</span>
+      <h2>Controls that notice you.</h2>
+      <p>At rest a knob is solid. Hold it and it becomes a lens. Menus grow out of their buttons. A selection stretches on its way to your finger. Touch everything.</p>
     </div>
     <div class="control-stage reveal-y">
       <canvas class="control-bg" aria-hidden="true"></canvas>
@@ -156,7 +182,7 @@
   <section class="chapter" id="app">
     <div class="wrap app-row">
       <div class="chapter-head reveal">
-        <span class="kicker">05</span>
+        <span class="kicker">06</span>
         <h2>Looks right in an actual app.</h2>
         <p>Scroll the feed and the tab bar shrinks to get out of the way. Drag across it and the selection follows as a lens. Tap an album and a sheet floats up, inset so the content peeks around it. Pull it up and it goes flush and more opaque.</p>
         <p class="fine">Corners are concentric. The sheet sits 8 px inside a 55 px device corner, so its corner is 47 px.</p>
@@ -188,7 +214,7 @@
 
   <section class="chapter" id="liquid">
     <div class="wrap chapter-head reveal">
-      <span class="kicker">06</span>
+      <span class="kicker">07</span>
       <h2>Two drops, one glass.</h2>
       <p>Bring glass shapes close and they melt into one surface, with one rim and one refraction. Move your pointer over it, or drag a finger sideways across it.</p>
     </div>
@@ -198,11 +224,45 @@
     </div>
   </section>
 
+  <section class="chapter" id="other">
+    <div class="wrap chapter-head reveal">
+      <span class="kicker">08</span>
+      <h2>Other light.</h2>
+      <p>A look is a short list of tokens and optics, so there is room for more. Three sketches from other times glass mattered. Each tile runs its own look; the button puts it on the whole page.</p>
+    </div>
+    <div class="wrap gallery reveal-y">
+      <figure class="look-tile" data-ag-look="glass-chain">
+        <canvas class="look-bg" data-scene="crystal" aria-hidden="true"></canvas>
+        <ag-glass class="look-card" variant="regular">
+          <b>Glass Chain</b>
+          <span>Berlin, 1919. Bruno Taut and the crystal letters. Thick glass, sharp corners, colour split at every edge.</span>
+          <div class="row"><ag-switch checked></ag-switch><ag-button variant="prominent" size="small" data-try="glass-chain">Try on the page</ag-button></div>
+        </ag-glass>
+      </figure>
+      <figure class="look-tile" data-ag-look="lux-nova">
+        <canvas class="look-bg" data-scene="rose" aria-hidden="true"></canvas>
+        <ag-glass class="look-card" variant="regular">
+          <b>Lux Nova</b>
+          <span>Saint-Denis, 1140s. Abbot Suger fills a choir with coloured light. The colour lives in the pane, held in dark lead.</span>
+          <div class="row"><ag-switch checked></ag-switch><ag-button variant="prominent" size="small" data-try="lux-nova">Try on the page</ag-button></div>
+        </ag-glass>
+      </figure>
+      <figure class="look-tile" data-ag-look="bauhaus">
+        <canvas class="look-bg" data-scene="planes" aria-hidden="true"></canvas>
+        <ag-glass class="look-card" variant="regular">
+          <b>Bauhaus</b>
+          <span>Dessau, 1920s. Albers and Moholy-Nagy. Flat planes that overlap and both stay readable. No light on the edge.</span>
+          <div class="row"><ag-switch checked></ag-switch><ag-button variant="prominent" size="small" data-try="bauhaus">Try on the page</ag-button></div>
+        </ag-glass>
+      </figure>
+    </div>
+  </section>
+
   <section class="chapter" id="use">
     <div class="wrap chapter-head reveal">
-      <span class="kicker">07</span>
-      <h2>Two lines to try it.</h2>
-      <p>One CSS file, one script. Every element works in any framework. React and Vue get typed wrappers with the usual props, events and <code>v-model</code>.</p>
+      <span class="kicker">09</span>
+      <h2>Two lines to start.</h2>
+      <p>One CSS file, one script. Every element works in any framework. React and Vue get typed wrappers with the usual props, events and <code>v-model</code>. A look is one attribute more.</p>
     </div>
     <div class="wrap code-box reveal-y">
       <div class="code-bar">
@@ -216,9 +276,14 @@
 
 <footer class="footer wrap">
   <p><b>Where it works.</b> Full refraction runs in Chrome, Edge, Arc, Brave and other Chromium browsers. Safari and Firefox do not run SVG filters inside <code>backdrop-filter</code>, so there you get frost, tint and rim light, plus real refraction over canvases the page painted itself. The hero runs on the experimental WebGL2 renderer, which should work everywhere WebGL2 does. Every feature is labelled stable, limited or experimental in the <a href="guide/#support">guide</a>.</p>
+  <p><b>Where the looks come from.</b> Each look is a homage to a movement: Light and Space, the Glass Chain, the stained glass of Saint-Denis and the Bauhaus. None is affiliated with an artist or an estate. Looks are experimental: the API and the colours may change.</p>
   <p><b>Whose idea.</b> Liquid Glass is Apple's design language, and their Human Interface Guidelines are the reference for every control here. This project is independent and not affiliated with Apple. Icons are our own drawings.</p>
   <p class="footer-links"><a href="guide/">Technical guide</a> · <a href="https://github.com/tomacco/amazing-glass">Source on GitHub</a> · MIT licence</p>
 </footer>
+
+<ag-glass class="look-dock" variant="regular" role="group" aria-label="Look">
+  <ag-segmented id="look" options="System,Light and Space" value="System"></ag-segmented>
+</ag-glass>
 
 <div class="engine-note" id="engine-note" hidden>This browser skips the refraction filter, so you are seeing the fallback. Chromium shows the full effect.</div>
 

@@ -2,6 +2,7 @@ export { Glass, type GlassOptions, type GlassTone } from './glass';
 export { GlassField, type Box } from './field';
 export { webgl2Available } from './field-gl';
 export { FEATURES, LEVELS, featureStatus, type Feature, type SupportLevel } from './support';
+export { LOOKS, personalize, lookFor, type Look, type LookName } from './looks';
 export { VARIANTS, resolveParams, type GlassParams, type GlassVariant } from './params';
 export { supportsRefraction } from './filter';
 export { registerBackdrop, backdropChanged, luminanceAt, refresh } from './backdrop';

@@ -24,7 +24,7 @@ fail(await Bun.build({
 // "use client" must be the first statement for React Server Components bundlers.
 const reactOut = root + 'dist/react.js';
 writeFileSync(reactOut, '"use client";\n' + readFileSync(reactOut, 'utf8').replace(/^"use client";\n/m, ''));
-const css = ['tokens', 'glass', 'components'].map(n => readFileSync(root + `src/styles/${n}.css`, 'utf8')).join('\n');
+const css = ['tokens', 'glass', 'components', 'looks'].map(n => readFileSync(root + `src/styles/${n}.css`, 'utf8')).join('\n');
 writeFileSync(root + 'dist/amazing-glass.css', css);
 await $`${root}node_modules/.bin/tsc -p ${root}tsconfig.json`.quiet();
 console.log('dist ok');

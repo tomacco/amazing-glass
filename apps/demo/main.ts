@@ -1,8 +1,8 @@
 import '../../src/elements';
-import { Glass, GlassField, supportsRefraction, registerBackdrop, backdropChanged, type GlassVariant } from '../../src/core';
+import { Glass, GlassField, supportsRefraction, registerBackdrop, backdropChanged, personalize, LOOKS, type GlassVariant, type LookName } from '../../src/core';
 import { refractOffset, rimHeight } from '../../src/core/optics';
 import type { AgSegmented, AgSheet, AgTabBar, AgMenu, AgSlider } from '../../src/elements';
-import { paint, type SceneName } from '../shared/scenes';
+import { paint, skyspace, type SceneName } from '../shared/scenes';
 
 const $ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector(s) as T;
 const $$ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => [...r.querySelectorAll(s)] as T[];
@@ -12,7 +12,9 @@ if (!supportsRefraction) $('#engine-note').hidden = false;
 
 /* ------------------------------------------------ Animated colour fields */
 // Soft blobs drifting on a canvas. Rendered at half resolution; the glass on top does the rest.
-function blobs(canvas: HTMLCanvasElement, palette: string[], opts: { base: string; count: number; speed: number; alpha: number }) {
+// Under the Light and Space look the same canvases paint a skyspace room.
+const pageLook = () => (document.documentElement.dataset.agLook ?? 'system') as LookName;
+function blobs(canvas: HTMLCanvasElement, palette: string[], opts: { base: string; count: number; speed: number; alpha: number; align?: 'center' | 'right' }) {
   const ctx = canvas.getContext('2d', { willReadFrequently: !supportsRefraction })!;
   const seeds = Array.from({ length: opts.count }, (_, i) => ({ x: Math.random(), y: Math.random(), r: 0.25 + Math.random() * 0.35, c: palette[i % palette.length], p: Math.random() * 7, s: 0.6 + Math.random() }));
   registerBackdrop(canvas);
@@ -22,8 +24,9 @@ function blobs(canvas: HTMLCanvasElement, palette: string[], opts: { base: strin
     const w = Math.max(1, Math.round(canvas.clientWidth / 2)), h = Math.max(1, Math.round(canvas.clientHeight / 2));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
     ctx.globalAlpha = 1;
-    ctx.fillStyle = opts.base; ctx.fillRect(0, 0, w, h);
-    for (const b of seeds) {
+    if (pageLook() === 'light-space') skyspace(ctx, w, h, t, opts.align !== 'right' ? 'center' : innerWidth > 760 ? 'right' : 'top');
+    else { ctx.fillStyle = opts.base; ctx.fillRect(0, 0, w, h); }
+    if (pageLook() !== 'light-space') for (const b of seeds) {
       const k = t * 0.00006 * opts.speed * b.s;
       const x = (b.x + Math.sin(k + b.p) * 0.18) * w, y = (b.y + Math.cos(k * 1.3 + b.p) * 0.18) * h, r = b.r * Math.max(w, h);
       const g = ctx.createRadialGradient(x, y, 0, x, y, r);
@@ -36,7 +39,7 @@ function blobs(canvas: HTMLCanvasElement, palette: string[], opts: { base: strin
   const loop = (t: number) => { if (visible) draw(t); if (!still) requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 }
-blobs($('.hero-bg'), ['#1d4ed8', '#7c3aed', '#db2777', '#0891b2', '#f97316'], { base: '#08090d', count: 7, speed: 1, alpha: 0.55 });
+blobs($('.hero-bg'), ['#1d4ed8', '#7c3aed', '#db2777', '#0891b2', '#f97316'], { base: '#08090d', count: 7, speed: 1, alpha: 0.55, align: 'right' });
 blobs($('.control-bg'), ['#ff5e62', '#ff9966', '#5b8cff', '#a855f7', '#22d3ee', '#fbbf24', '#f472b6'], { base: '#0b1b4d', count: 9, speed: 1.6, alpha: 0.8 });
 
 /* ------------------------------------------------ Hero: liquid drops */
@@ -51,10 +54,11 @@ const stage = document.createElement('canvas');
 stage.className = 'hero-stage';
 stage.setAttribute('aria-hidden', 'true');
 heroBg.after(stage);
+const DROPS = { blur: 0, saturate: 1.25, lum: 1, contrast: 1, bezel: 0.42, maxBezel: 44, depth: 1.2, dispersion: 0.035, rim: 1.35, rimWidth: 1.1, shade: 0.12 };
 const drops = new GlassField(dropsEl, {
   renderer: new URLSearchParams(location.search).has('svg') ? 'svg' : 'webgl', backdrop: stage,
   merge: 46, fit: true, margin: 56,
-  params: { blur: 0, saturate: 1.25, lum: 1, contrast: 1, bezel: 0.42, maxBezel: 44, depth: 1.2, dispersion: 0.035, rim: 1.35, rimWidth: 1.1, shade: 0.12 },
+  params: DROPS,
 });
 const gpu = drops.renderer === 'webgl';
 hero.classList.toggle('gpu', gpu);
@@ -76,8 +80,9 @@ function paintStage() {
     (ctx as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = cs.letterSpacing;
     const m = ctx.measureText(span.textContent!), base = b.top + (b.height + m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
     const outlined = cs.webkitTextStrokeWidth && parseFloat(cs.webkitTextStrokeWidth) > 0;
-    if (outlined) { ctx.lineWidth = parseFloat(cs.webkitTextStrokeWidth) * 1.4; ctx.strokeStyle = '#f4f5f7'; ctx.strokeText(span.textContent!, b.left, base); }
-    else { ctx.fillStyle = '#f4f5f7'; ctx.fillText(span.textContent!, b.left, base); }
+    const ink = cs.getPropertyValue('--title-ink').trim() || '#f4f5f7';
+    if (outlined) { ctx.lineWidth = parseFloat(cs.webkitTextStrokeWidth) * 1.4; ctx.strokeStyle = ink; ctx.strokeText(span.textContent!, b.left, base); }
+    else { ctx.fillStyle = ink; ctx.fillText(span.textContent!, b.left, base); }
   }
   ctx.globalAlpha = 1;
 }
@@ -148,7 +153,7 @@ dropHandle.addEventListener('pointerdown', e => {
   dropHandle.addEventListener('pointerup', up);
   dropHandle.addEventListener('pointercancel', up);
 });
-$('#cta-proof').addEventListener('click', () => $('#proof').scrollIntoView({ behavior: 'smooth' }));
+$('#cta-look').addEventListener('click', () => { setLook('light-space'); $('#looks').scrollIntoView({ behavior: 'smooth' }); });
 $('#cta-code').addEventListener('click', () => $('#use').scrollIntoView({ behavior: 'smooth' }));
 
 /* ------------------------------------------------ Ray diagram */
@@ -304,7 +309,8 @@ $<AgTabBar>('#tabs').items = [
 
 /* ------------------------------------------------ Liquid field */
 const liquid = $('#liquid-stage'), fieldEl = $('#liquid-field');
-const field = new GlassField(fieldEl, { variant: 'clear', merge: 60, params: { blur: 0.6, bezel: 0.4, maxBezel: 40, depth: 1.3, dispersion: 0.16, rim: 1.3 } });
+const FIELD = { blur: 0.6, bezel: 0.4, maxBezel: 40, depth: 1.3, dispersion: 0.16, rim: 1.3 };
+const field = new GlassField(fieldEl, { variant: 'clear', merge: 60, params: FIELD });
 let target = { x: 0.7, y: 0.5 }, drop = { x: 0.7, y: 0.5 }, pointerIn = false;
 liquid.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') pointerIn = true; });
 liquid.addEventListener('pointerup', e => { if (e.pointerType === 'touch') pointerIn = false; });
@@ -400,7 +406,6 @@ function paintScenes() {
 }
 requestAnimationFrame(paintScenes);
 let resizeT = 0;
-addEventListener('resize', () => { clearTimeout(resizeT); resizeT = window.setTimeout(paintScenes, 150); });
 
 // Reveal on scroll. Everything starts visible; only blocks below the fold are armed.
 const io = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.15 });
@@ -408,3 +413,47 @@ if (!still) $$('.reveal, .reveal-y').forEach(el => {
   if (el.getBoundingClientRect().top > innerHeight) { el.classList.add('armed'); io.observe(el); }
   else el.classList.add('in');
 });
+
+/* ------------------------------------------------ Looks */
+// The page opens on the fitted system material. A look is one call; fields keep the params
+// they were made with, so they get the look's optics by hand.
+const dock = $<AgSegmented>('#look');
+const BASE: LookName[] = ['system', 'light-space'];
+const names = (l: LookName) => LOOKS[l].name;
+function setLook(look: LookName) {
+  personalize(look);
+  const opts = BASE.includes(look) ? BASE : [...BASE, look];
+  if (dock.options.join() !== opts.map(names).join()) dock.options = opts.map(names);
+  dock.value = names(look);
+  const clear = LOOKS[look].params.clear ?? {};
+  drops.setParams({ ...DROPS, ...clear, blur: 0 });
+  field.setParams({ ...FIELD, ...clear });
+  $$<HTMLButtonElement>('[data-try]').forEach(b => b.toggleAttribute('data-current', b.dataset.try === look));
+}
+dock.addEventListener('change', () => {
+  const look = (Object.keys(LOOKS) as LookName[]).find(l => names(l) === dock.value);
+  if (look) setLook(look);
+});
+$$<HTMLElement>('[data-try]').forEach(b => b.addEventListener('click', () => {
+  setLook(b.dataset.try as LookName);
+  if (b.closest('.gallery')) $('#top').scrollIntoView({ behavior: 'smooth' });
+}));
+// Gallery tiles carry their own look and their own backdrop.
+function paintGallery() { $$<HTMLCanvasElement>('canvas.look-bg').forEach(c => paint(c, c.dataset.scene as SceneName)); }
+requestAnimationFrame(paintGallery);
+addEventListener('resize', () => { clearTimeout(resizeT); resizeT = window.setTimeout(() => { paintScenes(); paintGallery(); }, 150); });
+// The Light and Space room on the looks chapter, slowly changing sky.
+const room = $<HTMLCanvasElement>('#room');
+registerBackdrop(room);
+(function roomFrame(t: number) {
+  const r = room.getBoundingClientRect();
+  if (r.bottom > 0 && r.top < innerHeight) {
+    const dpr = Math.min(2, devicePixelRatio || 1), w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+    if (room.width !== w || room.height !== h) { room.width = w; room.height = h; }
+    const c = room.getContext('2d', { willReadFrequently: !supportsRefraction })!;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    skyspace(c, r.width, r.height, t + 9000);
+    if (!supportsRefraction) backdropChanged(room);
+  }
+  if (!still) requestAnimationFrame(roomFrame);
+})(performance.now());

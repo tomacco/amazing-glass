@@ -2,9 +2,9 @@
 
 # amazing-glass
 
-**Glass that bends the page behind it.**
+**Glass you know. Light you choose.**
 
-Web components for plain HTML, React and Vue. Real refraction, tuned against Apple's own renderer until the average pixel was off by about 2 out of 255.
+Web components for plain HTML, React and Vue. Real refraction, tuned against Apple's own renderer until the average pixel was off by about 2 out of 255. Then a look of your own, starting with Light and Space.
 
 [Live demo](https://tomacco.github.io/amazing-glass/) · [How it works](https://tomacco.github.io/amazing-glass/how/) · [Guide](https://tomacco.github.io/amazing-glass/guide/) · [API](docs/API.md) · [For AI agents](AGENTS.md)
 
@@ -121,7 +121,21 @@ Svelte, Solid, Angular, htmx or a PHP template from 2009: use the elements direc
 
 ## Make it yours
 
-Three levels, from coarse to fine.
+Four levels, from coarse to fine.
+
+**Pick a look** (experimental). A look changes the light on top of the fitted material: tint, coloured edge, corners, pace. It applies to everything inside the element that carries it.
+
+```html
+<html data-ag-look="light-space">
+```
+
+```ts
+import { personalize } from 'amazing-glass/core';
+personalize('light-space');                          // the whole page
+personalize('bauhaus', document.querySelector('#aside')); // one part of it
+```
+
+`light-space` is the one we built first: Southern California in the 1960s, coated glass and rooms made of light. `glass-chain`, `lux-nova` and `bauhaus` are sketches. `system` is the fitted default. A `GlassField` keeps the params it was given, so pass it the look's optics with `setParams`.
 
 **Pick a preset.** `variant="regular"` frosts for legibility, `clear` keeps the content visible, `lens` magnifies. Add `tint="#34c759"` for stained glass, or `dim` on clear glass over bright photos.
 
@@ -164,6 +178,7 @@ featureStatus('refraction-dom'); // { level: 'limited', available: true } in Chr
 | Refraction over canvases passed to registerBackdrop() | **Stable** | Full (SVG filter) | Full (CPU) | Full (CPU) |
 | Liquid merging: GlassField<br><sub>Costs CPU every frame while shapes move (about 8 ms per frame on a desktop for four shapes).</sub> | **Limited** | Full | Over registered canvases only (CPU) | Over registered canvases only (CPU) |
 | Liquid merging on the GPU: GlassField renderer "webgl"<br><sub>Bends only the backdrop canvas you pass, not page elements above it. Falls back to the SVG path without WebGL2.</sub> | **Experimental** | Full | Expected (WebGL2), untested | Expected (WebGL2), untested |
+| Looks: personalize() and data-ag-look<br><sub>Changes Glass elements and the CSS tokens. A GlassField keeps the params it was given; call setParams on it.</sub> | **Experimental** | Full | Tokens and fallback material | Tokens and fallback material |
 
 - **Stable:** Works in every current browser, with a documented fallback where a browser lacks something. API stable.
 - **Limited:** API stable. The full effect only in the browsers listed; the others get the fallback.
@@ -177,6 +192,7 @@ Where each was actually checked:
 - Refraction over canvases passed to registerBackdrop(): Chrome; the CPU path by forcing it in Chrome, not yet in Safari or Firefox themselves.
 - Liquid merging: Chrome desktop and mobile emulation.
 - Liquid merging on the GPU: Chrome desktop and mobile emulation.
+- Looks: Chrome desktop.
 <!-- support:end -->
 
 Add `?ag-fallback` to any URL to see the Safari and Firefox fallback in Chrome.

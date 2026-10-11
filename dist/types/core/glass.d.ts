@@ -29,9 +29,12 @@ export declare class Glass {
     private live;
     private ro;
     private stopRefresh;
+    private stopLook;
     private readonly id;
     constructor(el: HTMLElement, opts?: GlassOptions);
     get currentParams(): Readonly<GlassParams>;
+    /** Preset, then the look in force (src/core/looks.ts), then this instance's overrides. */
+    private resolve;
     setVariant(variant: GlassVariant): void;
     setParams(params: Partial<GlassParams>): void;
     setTone(tone: GlassTone): void;

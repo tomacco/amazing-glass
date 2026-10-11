@@ -16,6 +16,7 @@ Query at runtime with `featureStatus(id)` from `amazing-glass/core`.
 | Refraction over canvases passed to registerBackdrop() | **Stable** | Full (SVG filter) | Full (CPU) | Full (CPU) |
 | Liquid merging: GlassField<br><sub>Costs CPU every frame while shapes move (about 8 ms per frame on a desktop for four shapes).</sub> | **Limited** | Full | Over registered canvases only (CPU) | Over registered canvases only (CPU) |
 | Liquid merging on the GPU: GlassField renderer "webgl"<br><sub>Bends only the backdrop canvas you pass, not page elements above it. Falls back to the SVG path without WebGL2.</sub> | **Experimental** | Full | Expected (WebGL2), untested | Expected (WebGL2), untested |
+| Looks: personalize() and data-ag-look<br><sub>Changes Glass elements and the CSS tokens. A GlassField keeps the params it was given; call setParams on it.</sub> | **Experimental** | Full | Tokens and fallback material | Tokens and fallback material |
 
 - **Stable:** Works in every current browser, with a documented fallback where a browser lacks something. API stable.
 - **Limited:** API stable. The full effect only in the browsers listed; the others get the fallback.
@@ -29,6 +30,7 @@ Where each was actually checked:
 - Refraction over canvases passed to registerBackdrop(): Chrome; the CPU path by forcing it in Chrome, not yet in Safari or Firefox themselves.
 - Liquid merging: Chrome desktop and mobile emulation.
 - Liquid merging on the GPU: Chrome desktop and mobile emulation.
+- Looks: Chrome desktop.
 
 ## Material parameters
 
