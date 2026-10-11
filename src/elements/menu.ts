@@ -94,8 +94,8 @@ export class AgMenu extends Base {
     s.animate([
       { width: `${from.w}px`, height: `${from.h}px`, borderRadius: on ? `${from.h / 2}px` : '28px' },
       { width: `${to.w}px`, height: `${to.h}px`, borderRadius: on ? '28px' : `${to.h / 2}px` },
-    ], { duration: on ? 520 : 380, easing: on ? SPRING : 'cubic-bezier(.32,.72,0,1)' }).finished.then(() => this.glass!.morph(false));
-    if (on) this.listEl!.animate([{ opacity: 0, transform: 'scale(.92)' }, { opacity: 1, transform: 'none' }], { duration: 280, delay: 90, easing: 'ease-out', fill: 'backwards' });
+    ], { duration: on ? 380 : 280, easing: on ? SPRING : 'cubic-bezier(.32,.72,0,1)' }).finished.then(() => this.glass!.morph(false));
+    if (on) this.listEl!.animate([{ opacity: 0, transform: 'scale(.92)' }, { opacity: 1, transform: 'none' }], { duration: 220, delay: 60, easing: 'ease-out', fill: 'backwards' });
   }
 }
 define('ag-menu', AgMenu);

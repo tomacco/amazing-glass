@@ -27,6 +27,9 @@ function parseList(v) {
   const t = v.trim();
   return t.startsWith("[") ? parseJSON(t, []) : t.split(",").map((s) => s.trim()).filter(Boolean);
 }
+var HOLD_MS = 90;
+var MORPH_MS = 220;
+var SETTLE_MS = 140;
 function onDrag(el, h) {
   el.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || h.start?.(e) === false)
@@ -203,8 +206,6 @@ define("ag-button", AgButton2);
 // src/elements/switch.ts
 var KNOB = 38;
 var INSET = 2;
-var HOLD_MS = 90;
-var MORPH_MS = 220;
 
 class AgSwitch2 extends Base {
   static observedAttributes = ["checked", "disabled"];
@@ -279,7 +280,7 @@ class AgSwitch2 extends Base {
         setTimeout(() => {
           if (this.knob && !this.classList.contains("ag-active"))
             this.knob.dataset.solid = "";
-        }, MORPH_MS);
+        }, SETTLE_MS);
       }
     });
     this.addEventListener("keydown", (e) => {
@@ -360,33 +361,55 @@ class AgSlider2 extends Base {
     this.thumb.dataset.solid = "";
     this.renderIcons();
     this.attributeChangedCallback("value");
-    let v0 = 0;
+    let v0 = 0, lifted = false, timer = 0, jumpT = 0;
     const fromX = (x) => {
       const r = this.rail.getBoundingClientRect();
       return this.min + clamp((x - r.left) / r.width, 0, 1) * (this.max - this.min);
+    };
+    const lift = () => {
+      if (lifted)
+        return;
+      lifted = true;
+      this.classList.add("ag-active");
+      delete this.thumb.dataset.solid;
+      this.lens?.morph(true);
+      setTimeout(() => this.lens?.morph(false), MORPH_MS);
     };
     onDrag(this.rail, {
       start: (e) => {
         if (this.hasAttribute("disabled"))
           return false;
-        this.classList.add("ag-active");
-        delete this.thumb.dataset.solid;
-        v0 = this.thumb.contains(e.target) ? this.value : fromX(e.clientX);
+        lifted = false;
+        timer = window.setTimeout(lift, HOLD_MS);
+        const onThumb = this.thumb.contains(e.target);
+        v0 = onThumb ? this.value : fromX(e.clientX);
+        if (!onThumb) {
+          this.classList.add("ag-jump");
+          clearTimeout(jumpT);
+          jumpT = window.setTimeout(() => this.classList.remove("ag-jump"), 260);
+        }
         this.value = v0;
         fire(this, "input");
       },
       move: (dx) => {
+        lift();
+        this.classList.remove("ag-jump");
         const w = this.rail.getBoundingClientRect().width;
         this.value = v0 + dx / w * (this.max - this.min);
         fire(this, "input");
       },
       end: () => {
-        this.classList.remove("ag-active");
-        setTimeout(() => {
-          if (this.thumb)
-            this.thumb.dataset.solid = "";
-        }, 180);
+        clearTimeout(timer);
         fire(this, "change");
+        if (!lifted)
+          return;
+        this.classList.remove("ag-active");
+        this.lens?.morph(true);
+        setTimeout(() => this.lens?.morph(false), MORPH_MS);
+        setTimeout(() => {
+          if (this.thumb && !this.classList.contains("ag-active"))
+            this.thumb.dataset.solid = "";
+        }, SETTLE_MS);
       }
     });
     this.addEventListener("keydown", (e) => {
@@ -539,7 +562,7 @@ class AgSegmented2 extends Base {
     const from = this.index;
     this.index = i;
     if (from !== i && user && !reducedMotion()) {
-      this.pill?.animate([{ transform: "scale(1, 1)" }, { transform: "scale(1.18, 0.86)", offset: 0.35 }, { transform: "scale(1, 1)" }], { duration: 420, easing: "ease-out" });
+      this.pill?.animate([{ transform: "scale(1, 1)" }, { transform: "scale(1.18, 0.86)", offset: 0.35 }, { transform: "scale(1, 1)" }], { duration: 300, easing: "ease-out" });
     }
     this.place();
     if (from !== i && user)
@@ -877,9 +900,9 @@ class AgMenu2 extends Base {
     s.animate([
       { width: `${from.w}px`, height: `${from.h}px`, borderRadius: on ? `${from.h / 2}px` : "28px" },
       { width: `${to.w}px`, height: `${to.h}px`, borderRadius: on ? "28px" : `${to.h / 2}px` }
-    ], { duration: on ? 520 : 380, easing: on ? SPRING : "cubic-bezier(.32,.72,0,1)" }).finished.then(() => this.glass.morph(false));
+    ], { duration: on ? 380 : 280, easing: on ? SPRING : "cubic-bezier(.32,.72,0,1)" }).finished.then(() => this.glass.morph(false));
     if (on)
-      this.listEl.animate([{ opacity: 0, transform: "scale(.92)" }, { opacity: 1, transform: "none" }], { duration: 280, delay: 90, easing: "ease-out", fill: "backwards" });
+      this.listEl.animate([{ opacity: 0, transform: "scale(.92)" }, { opacity: 1, transform: "none" }], { duration: 220, delay: 60, easing: "ease-out", fill: "backwards" });
   }
 }
 define("ag-menu", AgMenu2);

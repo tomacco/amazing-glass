@@ -2,7 +2,7 @@
 import {
   Glass2
 } from "./chunks/index-yev3agx5.js";
-import"./chunks/index-44v46pqt.js";
+import"./chunks/index-294qn5j1.js";
 
 // src/react/index.tsx
 import {

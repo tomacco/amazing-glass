@@ -104,7 +104,7 @@ export class AgSegmented extends Base {
     const from = this.index;
     this.index = i;
     if (from !== i && user && !reducedMotion()) {
-      this.pill?.animate([{ transform: 'scale(1, 1)' }, { transform: 'scale(1.18, 0.86)', offset: 0.35 }, { transform: 'scale(1, 1)' }], { duration: 420, easing: 'ease-out' });
+      this.pill?.animate([{ transform: 'scale(1, 1)' }, { transform: 'scale(1.18, 0.86)', offset: 0.35 }, { transform: 'scale(1, 1)' }], { duration: 300, easing: 'ease-out' });
     }
     this.place();
     if (from !== i && user) fire(this, 'change');

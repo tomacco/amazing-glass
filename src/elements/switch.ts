@@ -1,11 +1,7 @@
 import { Glass } from '../core';
-import { Base, define, fire, onDrag } from './base';
+import { Base, define, fire, onDrag, HOLD_MS, MORPH_MS, SETTLE_MS } from './base';
 
 const KNOB = 38, INSET = 2;
-/** Press length before the knob lifts into a lens. Native: a 60 ms tap never shows one. */
-const HOLD_MS = 90;
-/** Length of the grow and shrink; the lens rebuilds at draft quality meanwhile. */
-const MORPH_MS = 220;
 
 /**
  * <ag-switch checked></ag-switch>
@@ -76,7 +72,7 @@ export class AgSwitch extends Base {
         if (!lifted) return;
         this.classList.remove('ag-active', 'ag-drag-on');
         this.morphFor(MORPH_MS);
-        setTimeout(() => { if (this.knob && !this.classList.contains('ag-active')) this.knob.dataset.solid = ''; }, MORPH_MS);
+        setTimeout(() => { if (this.knob && !this.classList.contains('ag-active')) this.knob.dataset.solid = ''; }, SETTLE_MS);
       },
     });
     this.addEventListener('keydown', e => {

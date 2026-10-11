@@ -27,6 +27,12 @@ export function parseList(v: string | null): string[] {
  * Horizontal drag. Pointer capture starts only after 3 px of movement, so a plain tap
  * stays an ordinary click on whatever was tapped.
  */
+/**
+ * Press feel, measured against SwiftUI on macOS 27 (lab/feel): a 60 ms tap never shows a lens,
+ * a hold shows one within about 100 ms, and the knob is solid again about 150 ms after release.
+ */
+export const HOLD_MS = 90, MORPH_MS = 220, SETTLE_MS = 140;
+
 export function onDrag(el: HTMLElement, h: {
   start?: (e: PointerEvent) => void | false;
   move?: (dx: number, e: PointerEvent) => void;

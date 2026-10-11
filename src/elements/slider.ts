@@ -1,5 +1,5 @@
 import { Glass } from '../core';
-import { Base, clamp, define, fire, onDrag } from './base';
+import { Base, clamp, define, fire, onDrag, HOLD_MS, MORPH_MS, SETTLE_MS } from './base';
 import { icon } from './icons';
 
 /**
@@ -54,27 +54,44 @@ export class AgSlider extends Base {
     this.renderIcons();
     this.attributeChangedCallback('value');
 
-    let v0 = 0;
+    let v0 = 0, lifted = false, timer = 0, jumpT = 0;
     const fromX = (x: number) => { const r = this.rail!.getBoundingClientRect(); return this.min + clamp((x - r.left) / r.width, 0, 1) * (this.max - this.min); };
+    // As with the switch: a tap moves the solid thumb, the lens waits for a hold or a drag.
+    const lift = () => {
+      if (lifted) return;
+      lifted = true;
+      this.classList.add('ag-active');
+      delete this.thumb!.dataset.solid;
+      this.lens?.morph(true);
+      setTimeout(() => this.lens?.morph(false), MORPH_MS);
+    };
     onDrag(this.rail, {
       start: e => {
         if (this.hasAttribute('disabled')) return false;
-        this.classList.add('ag-active');
-        delete this.thumb!.dataset.solid;
-        // Grabbing the thumb keeps its offset; tapping the rail jumps there.
-        v0 = this.thumb!.contains(e.target as Node) ? this.value : fromX(e.clientX);
+        lifted = false;
+        timer = window.setTimeout(lift, HOLD_MS);
+        // Grabbing the thumb keeps its offset; tapping the rail glides there.
+        const onThumb = this.thumb!.contains(e.target as Node);
+        v0 = onThumb ? this.value : fromX(e.clientX);
+        if (!onThumb) { this.classList.add('ag-jump'); clearTimeout(jumpT); jumpT = window.setTimeout(() => this.classList.remove('ag-jump'), 260); }
         this.value = v0;
         fire(this, 'input');
       },
       move: dx => {
+        lift();
+        this.classList.remove('ag-jump');
         const w = this.rail!.getBoundingClientRect().width;
         this.value = v0 + (dx / w) * (this.max - this.min);
         fire(this, 'input');
       },
       end: () => {
-        this.classList.remove('ag-active');
-        setTimeout(() => { if (this.thumb) this.thumb.dataset.solid = ''; }, 180);
+        clearTimeout(timer);
         fire(this, 'change');
+        if (!lifted) return;
+        this.classList.remove('ag-active');
+        this.lens?.morph(true);
+        setTimeout(() => this.lens?.morph(false), MORPH_MS);
+        setTimeout(() => { if (this.thumb && !this.classList.contains('ag-active')) this.thumb.dataset.solid = ''; }, SETTLE_MS);
       },
     });
     this.addEventListener('keydown', e => {

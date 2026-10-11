@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Switch feel</title>
+<title>Feel rig</title>
 <link rel="stylesheet" href="../../dist/amazing-glass.css">
 <style>
   /* Mirrors native/SwitchRef.swift: 400 x 160 of 12 px colour stripes, two switches 160 px apart. */
@@ -13,13 +13,25 @@
 </style>
 </head>
 <body>
-<div id="stage"><ag-switch id="a"></ag-switch><ag-switch id="b" checked></ag-switch></div>
+<div id="stage"></div>
+<!-- Press marker, as in native/FeelRef.swift: black from the first pointerdown. -->
+<i id="mark" style="position:fixed;left:0;top:0;width:8px;height:8px;background:#fff;z-index:9"></i>
+<script>addEventListener('pointerdown', () => { document.getElementById('mark').style.background = '#000'; }, { capture: true });</script>
 <script>
   // ?look=glass-chain puts the stage under a look; ?card=1 wraps each switch in a glass card,
   // like the gallery on the demo page.
   const q = new URLSearchParams(location.search), stage = document.getElementById('stage');
+  // One control per scene, centred, as in native/FeelRef.swift.
+  stage.innerHTML = {
+    switch: '<ag-switch id="a"></ag-switch>',
+    slider: '<ag-slider id="a" value="30" style="width:240px"></ag-slider>',
+    segmented: '<ag-segmented id="a" options="Day,Week,Month" value="Day" style="width:240px"></ag-segmented>',
+    button: '<ag-button id="a" size="large">Cancel</ag-button>',
+    prominent: '<ag-button id="a" size="large" variant="prominent">Done</ag-button>',
+    menu: `<ag-menu id="a" label="More" items='[{"label":"Share"},{"label":"Duplicate"},{"separator":true},{"label":"Delete","destructive":true}]'></ag-menu>`,
+  }[q.get('scene') ?? 'switch'];
   if (q.get('look')) stage.dataset.agLook = q.get('look');
-  if (q.get('card')) for (const sw of stage.querySelectorAll('ag-switch')) {
+  if (q.get('card')) for (const sw of stage.querySelectorAll('#a')) {
     const card = document.createElement('ag-glass'); card.setAttribute('variant', 'regular');
     card.style.cssText = 'padding:14px;display:block'; sw.replaceWith(card); card.append(sw);
   }
@@ -30,8 +42,8 @@
   window.trace = [];
   const t0 = performance.now();
   (function frame(t) {
-    for (const id of ['a', 'b']) {
-      const k = document.querySelector(`#${id} .ag-switch-knob`);
+    for (const id of ['a']) {
+      const k = document.querySelector(`#${id} .ag-glass`) ?? document.querySelector(`#${id}`);
       if (!k) continue;
       const r = k.getBoundingClientRect();
       window.trace.push({ t: Math.round(t - t0), id, w: +r.width.toFixed(1), h: +r.height.toFixed(1), x: +r.left.toFixed(1), solid: 'solid' in k.dataset });
