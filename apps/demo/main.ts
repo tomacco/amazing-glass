@@ -418,12 +418,12 @@ if (!still) $$('.reveal, .reveal-y').forEach(el => {
 // The page opens on the fitted system material. A look is one call; fields keep the params
 // they were made with, so they get the look's optics by hand.
 const dock = $<AgSegmented>('#look');
-const BASE: LookName[] = ['system', 'light-space'];
-const names = (l: LookName) => LOOKS[l].name;
+// Every look lives in the dock; short names keep five segments on a phone.
+const LOOK_ORDER: LookName[] = ['system', 'light-space', 'glass-chain', 'lux-nova', 'bauhaus'];
+const SHORT: Record<LookName, string> = { system: 'System', 'light-space': 'Light & Space', 'glass-chain': 'Chain', 'lux-nova': 'Lux Nova', bauhaus: 'Bauhaus' };
+const names = (l: LookName) => SHORT[l];
 function setLook(look: LookName) {
   personalize(look);
-  const opts = BASE.includes(look) ? BASE : [...BASE, look];
-  if (dock.options.join() !== opts.map(names).join()) dock.options = opts.map(names);
   dock.value = names(look);
   const clear = LOOKS[look].params.clear ?? {};
   drops.setParams({ ...DROPS, ...clear, blur: 0 });
@@ -431,7 +431,7 @@ function setLook(look: LookName) {
   $$<HTMLButtonElement>('[data-try]').forEach(b => b.toggleAttribute('data-current', b.dataset.try === look));
 }
 dock.addEventListener('change', () => {
-  const look = (Object.keys(LOOKS) as LookName[]).find(l => names(l) === dock.value);
+  const look = LOOK_ORDER.find(l => names(l) === dock.value);
   if (look) setLook(look);
 });
 $$<HTMLElement>('[data-try]').forEach(b => b.addEventListener('click', () => {

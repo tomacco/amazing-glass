@@ -2,6 +2,10 @@ import { Glass } from '../core';
 import { Base, define, fire, onDrag } from './base';
 
 const KNOB = 38, INSET = 2;
+/** Press length before the knob lifts into a lens. Native: a 60 ms tap never shows one. */
+const HOLD_MS = 90;
+/** Length of the grow and shrink; the lens rebuilds at draft quality meanwhile. */
+const MORPH_MS = 220;
 
 /**
  * <ag-switch checked></ag-switch>
@@ -12,6 +16,7 @@ export class AgSwitch extends Base {
   static observedAttributes = ['checked', 'disabled'];
   private knob?: HTMLSpanElement;
   private lens?: Glass;
+  private morphT = 0;
 
   get checked() { return this.hasAttribute('checked'); }
   set checked(v: boolean) { this.toggleAttribute('checked', !!v); }
@@ -38,32 +43,52 @@ export class AgSwitch extends Base {
     this.knob.dataset.solid = '';
 
     // Travel uses the resting knob width; the knob grows while touched.
+    // Like the native switch, a quick tap only slides the solid knob. The lens appears once
+    // the press outlasts HOLD_MS or the finger moves.
     const travel = () => this.offsetWidth - KNOB - INSET * 2;
-    let startOn = false, x = 0;
+    let startOn = false, x = 0, lifted = false, timer = 0;
+    const lift = () => {
+      if (lifted) return;
+      lifted = true;
+      this.classList.add('ag-active');
+      this.classList.toggle('ag-drag-on', startOn);
+      delete this.knob!.dataset.solid;
+      this.morphFor(MORPH_MS);
+    };
     onDrag(this, {
       start: () => {
         if (this.disabled) return false;
         startOn = this.checked;
         x = startOn ? travel() : 0;
-        this.classList.add('ag-active');
-        this.classList.toggle('ag-drag-on', startOn);
-        delete this.knob!.dataset.solid;
+        lifted = false;
+        timer = window.setTimeout(lift, HOLD_MS);
       },
       move: dx => {
+        lift();
         x = Math.min(travel() + 6, Math.max(-6, (startOn ? travel() : 0) + dx));
         this.knob!.style.setProperty('--x', `${x}px`);
         this.classList.toggle('ag-drag-on', x > travel() / 2);
       },
       end: moved => {
-        this.classList.remove('ag-active', 'ag-drag-on');
+        clearTimeout(timer);
         this.knob!.style.removeProperty('--x');
         this.set(moved ? x > travel() / 2 : !startOn);
-        setTimeout(() => { if (this.knob) this.knob.dataset.solid = ''; }, 180);
+        if (!lifted) return;
+        this.classList.remove('ag-active', 'ag-drag-on');
+        this.morphFor(MORPH_MS);
+        setTimeout(() => { if (this.knob && !this.classList.contains('ag-active')) this.knob.dataset.solid = ''; }, MORPH_MS);
       },
     });
     this.addEventListener('keydown', e => {
       if ((e.key === ' ' || e.key === 'Enter') && !this.disabled) { e.preventDefault(); this.set(!this.checked); }
     });
+  }
+
+  /** Draft-quality glass while the knob changes size, then one full rebuild. */
+  private morphFor(ms: number) {
+    this.lens?.morph(true);
+    clearTimeout(this.morphT);
+    this.morphT = window.setTimeout(() => this.lens?.morph(false), ms);
   }
 
   private set(v: boolean) {

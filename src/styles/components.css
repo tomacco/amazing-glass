@@ -45,7 +45,7 @@ ag-switch.ag-active:not(.ag-drag-on) .ag-switch-track { background: var(--ag-fil
   position: absolute; left: 2px; top: 2px; width: 38px; height: 24px; border-radius: 12px;
   transform: translateX(var(--x));
   --ag-shadow: 0 3px 8px rgb(0 0 0 / 0.15), 0 0.5px 1px rgb(0 0 0 / 0.12);
-  transition: transform 0.5s var(--ag-spring), width 0.35s var(--ag-spring), height 0.35s var(--ag-spring), left 0.35s var(--ag-spring), top 0.35s var(--ag-spring);
+  transition: transform 0.3s var(--ag-ease), width 0.22s var(--ag-ease), height 0.22s var(--ag-ease), left 0.22s var(--ag-ease), top 0.22s var(--ag-ease);
 }
 ag-switch[checked] .ag-switch-knob { --x: 22px; }
 /* Touched: the knob lifts off the track as a lens bigger than the track. */

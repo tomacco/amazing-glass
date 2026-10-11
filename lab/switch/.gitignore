@@ -1,0 +1,4 @@
+out/
+native/SwitchRef
+native/drive
+native/*.dSYM/

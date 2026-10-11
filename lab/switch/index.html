@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Switch feel</title>
+<link rel="stylesheet" href="../../dist/amazing-glass.css">
+<style>
+  /* Mirrors native/SwitchRef.swift: 400 x 160 of 12 px colour stripes, two switches 160 px apart. */
+  body { margin: 0; background: #222; }
+  #stage { width: 400px; height: 160px; display: flex; justify-content: center; align-items: center; gap: 96px;
+    background: repeating-linear-gradient(90deg, #ff3b30 0 12px, #ff9500 12px 24px, #ffcc00 24px 36px, #34c759 36px 48px, #5ac8fa 48px 60px, #007aff 60px 72px, #af52de 72px 84px); }
+</style>
+</head>
+<body>
+<div id="stage"><ag-switch id="a"></ag-switch><ag-switch id="b" checked></ag-switch></div>
+<script>
+  // ?look=glass-chain puts the stage under a look; ?card=1 wraps each switch in a glass card,
+  // like the gallery on the demo page.
+  const q = new URLSearchParams(location.search), stage = document.getElementById('stage');
+  if (q.get('look')) stage.dataset.agLook = q.get('look');
+  if (q.get('card')) for (const sw of stage.querySelectorAll('ag-switch')) {
+    const card = document.createElement('ag-glass'); card.setAttribute('variant', 'regular');
+    card.style.cssText = 'padding:14px;display:block'; sw.replaceWith(card); card.append(sw);
+  }
+</script>
+<script type="module">
+  import '../../dist/elements.js';
+  // Per-frame log of each knob: size, position and whether it is solid or glass.
+  window.trace = [];
+  const t0 = performance.now();
+  (function frame(t) {
+    for (const id of ['a', 'b']) {
+      const k = document.querySelector(`#${id} .ag-switch-knob`);
+      if (!k) continue;
+      const r = k.getBoundingClientRect();
+      window.trace.push({ t: Math.round(t - t0), id, w: +r.width.toFixed(1), h: +r.height.toFixed(1), x: +r.left.toFixed(1), solid: 'solid' in k.dataset });
+    }
+    requestAnimationFrame(frame);
+  })(performance.now());
+</script>
+</body>
+</html>

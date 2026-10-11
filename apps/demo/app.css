@@ -247,6 +247,7 @@ body, .footer, .chapter-head p { transition: background-color 1.2s ease, color 1
 /* The look picker floats at the bottom, on glass. */
 :root[data-ag-look="light-space"] .hero-sub { max-width: 30em; }
 @media (max-width: 760px) { :root[data-ag-look="light-space"] .hero-copy { justify-content: flex-end; } }
-.look-dock ag-segmented { width: 320px; max-width: 100%; }
-.look-dock ag-segmented button { white-space: nowrap; }
+.look-dock ag-segmented { width: 600px; max-width: 100%; }
+.look-dock ag-segmented button { white-space: nowrap; min-width: 0; padding: 0 10px; flex: 1 1 auto; }
+@media (max-width: 520px) { .look-dock ag-segmented button { padding: 0 7px; font-size: 12.5px; } }
 .look-dock { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; padding: 6px; border-radius: 999px; max-width: calc(100% - 32px); }

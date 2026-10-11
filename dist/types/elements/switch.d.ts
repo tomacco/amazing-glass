@@ -8,11 +8,14 @@ export declare class AgSwitch extends Base {
     static observedAttributes: string[];
     private knob?;
     private lens?;
+    private morphT;
     get checked(): boolean;
     set checked(v: boolean);
     get disabled(): boolean;
     set disabled(v: boolean);
     attributeChangedCallback(): void;
     connectedCallback(): void;
+    /** Draft-quality glass while the knob changes size, then one full rebuild. */
+    private morphFor;
     private set;
 }

@@ -203,11 +203,14 @@ define("ag-button", AgButton2);
 // src/elements/switch.ts
 var KNOB = 38;
 var INSET = 2;
+var HOLD_MS = 90;
+var MORPH_MS = 220;
 
 class AgSwitch2 extends Base {
   static observedAttributes = ["checked", "disabled"];
   knob;
   lens;
+  morphT = 0;
   get checked() {
     return this.hasAttribute("checked");
   }
@@ -240,30 +243,43 @@ class AgSwitch2 extends Base {
     this.lens = new Glass2(this.knob, { variant: "lens" });
     this.knob.dataset.solid = "";
     const travel = () => this.offsetWidth - KNOB - INSET * 2;
-    let startOn = false, x = 0;
+    let startOn = false, x = 0, lifted = false, timer = 0;
+    const lift = () => {
+      if (lifted)
+        return;
+      lifted = true;
+      this.classList.add("ag-active");
+      this.classList.toggle("ag-drag-on", startOn);
+      delete this.knob.dataset.solid;
+      this.morphFor(MORPH_MS);
+    };
     onDrag(this, {
       start: () => {
         if (this.disabled)
           return false;
         startOn = this.checked;
         x = startOn ? travel() : 0;
-        this.classList.add("ag-active");
-        this.classList.toggle("ag-drag-on", startOn);
-        delete this.knob.dataset.solid;
+        lifted = false;
+        timer = window.setTimeout(lift, HOLD_MS);
       },
       move: (dx) => {
+        lift();
         x = Math.min(travel() + 6, Math.max(-6, (startOn ? travel() : 0) + dx));
         this.knob.style.setProperty("--x", `${x}px`);
         this.classList.toggle("ag-drag-on", x > travel() / 2);
       },
       end: (moved) => {
-        this.classList.remove("ag-active", "ag-drag-on");
+        clearTimeout(timer);
         this.knob.style.removeProperty("--x");
         this.set(moved ? x > travel() / 2 : !startOn);
+        if (!lifted)
+          return;
+        this.classList.remove("ag-active", "ag-drag-on");
+        this.morphFor(MORPH_MS);
         setTimeout(() => {
-          if (this.knob)
+          if (this.knob && !this.classList.contains("ag-active"))
             this.knob.dataset.solid = "";
-        }, 180);
+        }, MORPH_MS);
       }
     });
     this.addEventListener("keydown", (e) => {
@@ -272,6 +288,11 @@ class AgSwitch2 extends Base {
         this.set(!this.checked);
       }
     });
+  }
+  morphFor(ms) {
+    this.lens?.morph(true);
+    clearTimeout(this.morphT);
+    this.morphT = window.setTimeout(() => this.lens?.morph(false), ms);
   }
   set(v) {
     if (v === this.checked)
