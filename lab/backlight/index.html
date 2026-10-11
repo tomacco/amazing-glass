@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backlight lab</title>
+<!-- Research preview. Glass lit from behind, after Larry Bell and James Turrell.
+       ?mode=both      backdrop light + rim emission (default)
+       ?mode=backdrop  light painted into a registered canvas only; the refraction bends it
+       ?mode=rim       rim emission overlay only, dim backdrop
+       ?mode=param     per-instance `light` and `rim` params of the existing specular map
+       ?light=x,y      park the light at viewport fractions, for screenshots
+       window.blStats() returns frame cost; window.blAudioBench(s) times the sound graph offline.
+     Build first: bun run build lib. Serve: bun tools/serve.ts 5191, open /lab/backlight/ -->
+<link rel="stylesheet" href="../../dist/amazing-glass.css">
+<style>
+  :root { --room: #040406; --ink: #e9e4dc; --ink-2: rgb(233 228 220 / 0.55); }
+  html, body { margin: 0; height: 100%; background: var(--room); color: var(--ink); overflow: hidden;
+    font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
+  body { touch-action: none; -webkit-user-select: none; user-select: none; }
+  #room, #halo, #rim { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #room { z-index: 0; }
+  #halo { z-index: 1; filter: blur(6px); }
+  #rim { z-index: 20; mix-blend-mode: screen; }
+  .stage { position: fixed; inset: 0; z-index: 2; }
+  .stage > * { position: absolute; }
+  .shape { display: block; }
+  #rect { left: 9vw; top: 24vh; width: clamp(200px, 27vw, 380px); height: clamp(140px, 30vh, 240px); border-radius: 22px; }
+  #circle { left: 44vw; top: 16vh; width: clamp(120px, 15vw, 210px); aspect-ratio: 1; border-radius: 50%; }
+  #capsule { left: 56vw; top: 54vh; width: clamp(180px, 26vw, 340px); height: clamp(56px, 8vh, 84px); border-radius: 999px; }
+  #square { left: 30vw; top: 64vh; width: clamp(80px, 9vw, 120px); aspect-ratio: 1; border-radius: 28px; }
+  .controls { right: 6vw; top: 18vh; display: flex; flex-direction: column; gap: 22px; align-items: flex-end; }
+  .controls ag-slider { width: clamp(180px, 20vw, 260px); }
+  .hud { position: fixed; z-index: 30; left: 16px; top: 14px; max-width: calc(100vw - 32px); pointer-events: none; }
+  .hud h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+  .hud .warn { margin: 2px 0 8px; font-size: 12px; color: #ffb36b; }
+  .hud nav { pointer-events: auto; font-size: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .hud a { color: var(--ink-2); text-decoration: none; }
+  .hud a[aria-current] { color: var(--ink); text-decoration: underline; }
+  #stats { position: fixed; z-index: 30; left: 16px; bottom: 12px; font: 11px/1.3 ui-monospace, Menlo, monospace; color: var(--ink-2); pointer-events: none; }
+  @media (max-width: 700px) {
+    #rect { left: 6vw; top: 22vh; width: 56vw; height: 22vh; }
+    #circle { left: 58vw; top: 40vh; width: 34vw; }
+    #capsule { left: 8vw; top: 62vh; width: 60vw; height: 56px; }
+    #square { left: 70vw; top: 18vh; width: 22vw; }
+    .controls { right: auto; left: 6vw; top: auto; bottom: 7vh; align-items: flex-start; }
+  }
+</style>
+<body>
+<canvas id="room"></canvas>
+<canvas id="halo"></canvas>
+<div class="stage">
+  <ag-glass id="rect" class="shape" variant="clear" tone="dark" params='{"blur":3}' data-bl></ag-glass>
+  <ag-glass id="circle" class="shape" variant="clear" tone="dark" params='{"blur":3}' data-bl></ag-glass>
+  <ag-glass id="capsule" class="shape" variant="clear" tone="dark" params='{"blur":3}' data-bl></ag-glass>
+  <ag-glass id="square" class="shape" variant="regular" tone="dark" data-bl></ag-glass>
+  <div class="controls">
+    <ag-button id="sound" variant="clear" tone="dark" aria-pressed="false" data-bl>Sound off</ag-button>
+    <ag-switch id="sw" aria-label="Demo switch" checked></ag-switch>
+    <ag-slider id="sl" value="40" aria-label="Demo slider"></ag-slider>
+  </div>
+</div>
+<canvas id="rim"></canvas>
+<div class="hud">
+  <h1>Backlight</h1>
+  <p class="warn">Research preview. Not approved for production.</p>
+  <nav id="modes"></nav>
+</div>
+<div id="stats"></div>
+<script type="module" src="./backlight.js"></script>
+</body>
+</html>

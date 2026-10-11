@@ -10,7 +10,7 @@ const banned: [RegExp, string][] = [
   [/\b(Moreover|Furthermore|Additionally),/, 'stacked connector'],
   [/\bnot just\b/i, 'contrast reframe'],
 ];
-const patterns = ['README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'llms.txt', 'docs/**/*.md', 'lab/README.md', 'apps/**/*.html', 'apps/**/*.ts'];
+const patterns = ['README.md', 'AGENTS.md', 'CONTRIBUTING.md', 'llms.txt', 'docs/**/*.md', 'lab/README.md', 'lab/backlight/*','apps/**/*.html', 'apps/**/*.ts'];
 const files = patterns.flatMap(p => [...new Glob(p).scanSync('.')]);
 if (!files.length) { console.log('no files matched: check the patterns'); process.exit(1); }
 let bad = 0;
