@@ -2,6 +2,8 @@
 
 Research preview. Not approved for production.
 
+**Parked (2026-10-11).** Too many artifacts, low frame rate, and the effect did not earn its cost. Kept for reference; not on the roadmap.
+
 Glass lit from behind, after the Light and Space artists: Larry Bell's coated glass, James
 Turrell's light rooms. One diffused light sits under every glass shape on the page. The cursor
 or a finger suggests a direction; the light takes 60 % of the offset from the centre and gets
