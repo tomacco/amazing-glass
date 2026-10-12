@@ -69,10 +69,12 @@ export class AgSlider extends Base {
     onDrag(this.rail, {
       start: e => {
         if (this.hasAttribute('disabled')) return false;
+        // iOS ignores a finger on the track; only the thumb moves. macOS lets a click glide there.
+        const onThumb = this.thumb!.contains(e.target as Node);
+        if (!onThumb && e.pointerType !== 'mouse') return false;
         lifted = false;
         if (lensDelay(e) === 0) lift(); else timer = window.setTimeout(lift, lensDelay(e));
-        // Grabbing the thumb keeps its offset; tapping the rail glides there.
-        const onThumb = this.thumb!.contains(e.target as Node);
+        // Grabbing the thumb keeps its offset; clicking the rail glides there.
         v0 = onThumb ? this.value : fromX(e.clientX);
         if (!onThumb) { this.classList.add('ag-jump'); clearTimeout(jumpT); jumpT = window.setTimeout(() => this.classList.remove('ag-jump'), 260); }
         this.value = v0;

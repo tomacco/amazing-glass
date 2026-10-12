@@ -388,12 +388,14 @@ class AgSlider2 extends Base {
       start: (e) => {
         if (this.hasAttribute("disabled"))
           return false;
+        const onThumb = this.thumb.contains(e.target);
+        if (!onThumb && e.pointerType !== "mouse")
+          return false;
         lifted = false;
         if (lensDelay(e) === 0)
           lift();
         else
           timer = window.setTimeout(lift, lensDelay(e));
-        const onThumb = this.thumb.contains(e.target);
         v0 = onThumb ? this.value : fromX(e.clientX);
         if (!onThumb) {
           this.classList.add("ag-jump");
