@@ -307,9 +307,24 @@ function luminanceAt2(x, y, self) {
   }
   return null;
 }
-function measureTone(el) {
+function visibleRect(el) {
   const r = el.getBoundingClientRect();
-  if (!r.width)
+  let { left, top, right, bottom } = r;
+  for (let a = el.parentElement;a && a !== document.body; a = a.parentElement) {
+    const cs = getComputedStyle(a);
+    if (cs.overflowX === "visible" && cs.overflowY === "visible")
+      continue;
+    const c = a.getBoundingClientRect();
+    left = Math.max(left, c.left);
+    top = Math.max(top, c.top);
+    right = Math.min(right, c.right);
+    bottom = Math.min(bottom, c.bottom);
+  }
+  return { left, top, width: right - left, height: bottom - top };
+}
+function measureTone(el) {
+  const r = visibleRect(el);
+  if (r.width < 1 || r.height < 1)
     return null;
   let sum = 0, n = 0;
   for (let i = 0;i < 5; i++) {

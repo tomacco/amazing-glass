@@ -76,9 +76,27 @@ export function luminanceAt(x: number, y: number, self: Element): number | null 
  * Light or dark ink for small glass, from the content behind it. Hysteresis keeps it
  * from flickering over mid-grey content.
  */
-export function measureTone(el: HTMLElement): 'light' | 'dark' | null {
+/**
+ * The part of an element that can be seen: its box cut by every ancestor that clips
+ * (overflow other than visible). Glass that hangs over a clipped edge must not read the
+ * page outside it, or a lens dragged to the edge of a light picture picks dark ink.
+ */
+function visibleRect(el: HTMLElement) {
   const r = el.getBoundingClientRect();
-  if (!r.width) return null;
+  let left = r.left, top = r.top, right = r.right, bottom = r.bottom;
+  for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+    const cs = getComputedStyle(a);
+    if (cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+    const c = a.getBoundingClientRect();
+    left = Math.max(left, c.left); top = Math.max(top, c.top);
+    right = Math.min(right, c.right); bottom = Math.min(bottom, c.bottom);
+  }
+  return { left, top, width: right - left, height: bottom - top };
+}
+
+export function measureTone(el: HTMLElement): 'light' | 'dark' | null {
+  const r = visibleRect(el);
+  if (r.width < 1 || r.height < 1) return null;
   let sum = 0, n = 0;
   for (let i = 0; i < 5; i++) {
     const l = luminanceAt(r.left + (r.width * (i + 0.5)) / 5, r.top + r.height / 2, el);

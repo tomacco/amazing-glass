@@ -20,7 +20,7 @@ import {
   FEATURES2,
   featureStatus2,
   glass2
-} from "./chunks/index-yev3agx5.js";
+} from "./chunks/index-2hyxx3yn.js";
 export {
   FEATURES2 as FEATURES,
   Glass2 as Glass,

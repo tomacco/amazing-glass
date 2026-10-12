@@ -10,10 +10,6 @@ export declare function registerBackdrop(canvas: HTMLCanvasElement): () => void;
 export declare function backdropChanged(canvas?: HTMLCanvasElement): void;
 /** Luminance 0..1 behind a viewport point, or null when unknown. */
 export declare function luminanceAt(x: number, y: number, self: Element): number | null;
-/**
- * Light or dark ink for small glass, from the content behind it. Hysteresis keeps it
- * from flickering over mid-grey content.
- */
 export declare function measureTone(el: HTMLElement): 'light' | 'dark' | null;
 /**
  * The registered canvas behind an element, for the CPU refraction path. The element may
