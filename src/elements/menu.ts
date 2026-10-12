@@ -86,6 +86,13 @@ export class AgMenu extends Base {
       const r = s.getBoundingClientRect();
       if (r.left < 8) this.classList.add('ag-flip');
     }
+    // Open upward when the menu would run past the bottom of whatever clips it (a parent with
+    // overflow other than visible, or the window) and there is more room above.
+    if (on) {
+      this.classList.remove('ag-up');
+      const r = s.getBoundingClientRect(), box = clipBox(this), host = this.getBoundingClientRect();
+      if (r.bottom > box.bottom - 8 && host.bottom - box.top > box.bottom - host.top) this.classList.add('ag-up');
+    }
     const to = { w: s.offsetWidth, h: s.offsetHeight };
     if (on) (this.listEl!.querySelector('button') as HTMLButtonElement | null)?.focus({ preventScroll: true });
     fire(this, on ? 'open' : 'close');
@@ -97,5 +104,16 @@ export class AgMenu extends Base {
     ], { duration: on ? 380 : 280, easing: on ? SPRING : 'cubic-bezier(.32,.72,0,1)' }).finished.then(() => this.glass!.morph(false));
     if (on) this.listEl!.animate([{ opacity: 0, transform: 'scale(.92)' }, { opacity: 1, transform: 'none' }], { duration: 220, delay: 60, easing: 'ease-out', fill: 'backwards' });
   }
+}
+/** The area an element can draw in: the window cut by every ancestor that clips. */
+function clipBox(el: HTMLElement) {
+  let top = 0, bottom = innerHeight;
+  for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+    const cs = getComputedStyle(a);
+    if (cs.overflowY === 'visible' && cs.overflowX === 'visible') continue;
+    const c = a.getBoundingClientRect();
+    top = Math.max(top, c.top); bottom = Math.min(bottom, c.bottom);
+  }
+  return { top, bottom };
 }
 define('ag-menu', AgMenu);

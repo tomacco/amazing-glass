@@ -122,6 +122,8 @@ ag-menu[align="start"] .ag-menu-surface, ag-menu.ag-flip .ag-menu-surface { righ
 ag-menu[align="start"] .ag-menu-trigger, ag-menu.ag-flip .ag-menu-trigger { right: auto; left: 0; }
 .ag-menu-trigger:focus-visible { outline: 2px solid var(--ag-accent); outline-offset: -3px; }
 .ag-menu-list { display: none; }
+/* Opening upward: the surface grows from the trigger's bottom edge. */
+ag-menu.ag-up .ag-menu-surface { top: auto; bottom: 0; }
 ag-menu.ag-open .ag-menu-surface { width: var(--ag-menu-width, 250px); height: auto; border-radius: 28px; }
 ag-menu.ag-open .ag-menu-trigger { display: none; }
 ag-menu.ag-open .ag-menu-list { display: flex; flex-direction: column; padding: 8px; }

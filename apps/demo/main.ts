@@ -310,7 +310,10 @@ $<AgTabBar>('#tabs').items = [
 /* ------------------------------------------------ Liquid field */
 const liquid = $('#liquid-stage'), fieldEl = $('#liquid-field');
 const FIELD = { blur: 0.6, bezel: 0.4, maxBezel: 40, depth: 1.3, dispersion: 0.16, rim: 1.3 };
-const field = new GlassField(fieldEl, { variant: 'clear', merge: 60, params: FIELD });
+// The backdrop here is a canvas the page paints, so the field runs on the GPU like the hero:
+// it works in Safari, where the SVG path has nothing to bend, and costs almost no main thread.
+const liquidCanvas = $<HTMLCanvasElement>('canvas.scene-canvas', liquid);
+const field = new GlassField(fieldEl, { variant: 'clear', merge: 60, params: FIELD, renderer: new URLSearchParams(location.search).has('svg') ? 'svg' : 'webgl', backdrop: liquidCanvas });
 let target = { x: 0.7, y: 0.5 }, drop = { x: 0.7, y: 0.5 }, pointerIn = false;
 liquid.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') pointerIn = true; });
 liquid.addEventListener('pointerup', e => { if (e.pointerType === 'touch') pointerIn = false; });

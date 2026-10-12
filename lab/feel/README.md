@@ -17,7 +17,7 @@ Both sides paint a black square in the top left corner on mouse down; the sheets
 Our frames come from Playwright screenshots at about 20 per second, so our side can look up to
 one tile late.
 
-`stuck.ts` presses every switch and slider on the demo page, drifts off and releases elsewhere, and exits nonzero if any control keeps its lens. `tone.ts` drags the playground lens over its light picture to the clipped bottom edge and back, and exits nonzero if the glass picks dark ink anywhere on the way. `cost.ts` reads Chromium's own main-thread counters for one press, `frames.ts` measures frame
+`stuck.ts` presses every switch and slider on the demo page, drifts off and releases elsewhere, and exits nonzero if any control keeps its lens. `menu.ts` opens the menu at the bottom of the clipped controls section and fails if any of it is cut off. `tone.ts` drags the playground lens over its light picture to the clipped bottom edge and back, and exits nonzero if the glass picks dark ink anywhere on the way. `cost.ts` reads Chromium's own main-thread counters for one press, `frames.ts` measures frame
 times in a visible Chromium with the GPU compositor.
 
 The native controls are the macOS versions. Shapes differ from the iOS ones we copy (the macOS

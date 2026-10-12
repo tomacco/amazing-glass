@@ -933,6 +933,12 @@ class AgMenu2 extends Base {
       if (r.left < 8)
         this.classList.add("ag-flip");
     }
+    if (on) {
+      this.classList.remove("ag-up");
+      const r = s.getBoundingClientRect(), box = clipBox(this), host = this.getBoundingClientRect();
+      if (r.bottom > box.bottom - 8 && host.bottom - box.top > box.bottom - host.top)
+        this.classList.add("ag-up");
+    }
     const to = { w: s.offsetWidth, h: s.offsetHeight };
     if (on)
       this.listEl.querySelector("button")?.focus({ preventScroll: true });
@@ -947,6 +953,18 @@ class AgMenu2 extends Base {
     if (on)
       this.listEl.animate([{ opacity: 0, transform: "scale(.92)" }, { opacity: 1, transform: "none" }], { duration: 220, delay: 60, easing: "ease-out", fill: "backwards" });
   }
+}
+function clipBox(el) {
+  let top = 0, bottom = innerHeight;
+  for (let a = el.parentElement;a && a !== document.body; a = a.parentElement) {
+    const cs = getComputedStyle(a);
+    if (cs.overflowY === "visible" && cs.overflowX === "visible")
+      continue;
+    const c = a.getBoundingClientRect();
+    top = Math.max(top, c.top);
+    bottom = Math.min(bottom, c.bottom);
+  }
+  return { top, bottom };
 }
 define("ag-menu", AgMenu2);
 // src/elements/sheet.ts
