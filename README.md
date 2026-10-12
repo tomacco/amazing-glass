@@ -59,6 +59,8 @@ Plot twist from the data: Apple's Clear glass is frosted, around 16 px of blur. 
 
 Every one of them works with a mouse, a finger and a keyboard, and respects reduced motion, reduced transparency and increased contrast settings.
 
+They also press the way Apple's do, and Apple's Mac and iPhone controls press differently. On a Mac a quick click slides the solid knob and the lens only appears when you hold. On an iPhone the knob lifts into a lens the moment your finger lands. Ours follow the pointer: a mouse gets the Mac behaviour, a finger the iPhone one. We checked both frame by frame against SwiftUI on macOS 27 and iOS 27. The rig is in [`lab/feel/`](lab/feel/).
+
 ## Quick start
 
 ### Any page
@@ -137,6 +139,8 @@ personalize('bauhaus', document.querySelector('#aside')); // one part of it
 
 `light-space` is the one we built first: Southern California in the 1960s, coated glass and rooms made of light. `glass-chain`, `lux-nova` and `bauhaus` are sketches. `system` is the fitted default. A `GlassField` keeps the params it was given, so pass it the look's optics with `setParams`.
 
+**Light or dark.** Glass follows the page's appearance, as Apple's does. We measured it: in light mode SwiftUI's glass lightens everything behind it, even black, and in dark mode it darkens everything, even white. It never switches because of the content. Ours reads the nearest `data-theme`, then the system setting. Mark a light section inside a dark page with `data-theme="light"`, or set `tone="content"` to sample the backdrop.
+
 **Pick a preset.** `variant="regular"` frosts for legibility, `clear` keeps the content visible, `lens` magnifies. Add `tint="#34c759"` for stained glass, or `dim` on clear glass over bright photos.
 
 **Override tokens.** Colours, type and radii are CSS custom properties.
@@ -213,7 +217,7 @@ The catch: it only bends what is in `backdrop`. Page elements above that canvas 
 
 We would rather you hear these from us.
 
-- **The reference is macOS.** The fit ran against SwiftUI on macOS 27. iOS tunes its glass differently. The lens knobs and dark mode are hand-tuned, not measured yet.
+- **The material reference is macOS.** The pixel fit ran against SwiftUI on macOS 27. iOS tunes its glass differently. The lens knobs and the dark tint are hand-tuned, not fitted yet. How the controls move was checked against both macOS 27 and iOS 27.
 - **One backdrop rule to know.** If a parent of a glass element has `opacity` below 1, a `filter`, a `mask` or `mix-blend-mode`, the browser hides what is behind it from the glass. Animate `transform` on parents instead. The components already do.
 - **Liquid merging is CPU work** on the stable path: about 8 ms per frame on a desktop for four moving shapes. Over a canvas you draw, the experimental GPU renderer makes it nearly free.
 - **Not SF Symbols.** The icons are our own drawings. SF Symbols are licensed for Apple platforms only. Bring your own with `registerIcon()`.
@@ -230,6 +234,7 @@ src/styles/     tokens, material and component CSS
 apps/demo/      the landing page
 apps/guide/     the technical guide (and the source of docs/API.md)
 lab/            SwiftUI reference renderer and the fitter
+lab/feel/       motion and press checks against SwiftUI, Mac and iPhone
 tests/          unit tests for the optics
 ```
 
