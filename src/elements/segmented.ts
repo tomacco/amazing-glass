@@ -1,5 +1,5 @@
 import { Glass } from '../core';
-import { Base, clamp, define, fire, onDrag, parseList, reducedMotion } from './base';
+import { SETTLE_MS, TRAVEL_MS, Base, clamp, define, fire, onDrag, parseList, reducedMotion } from './base';
 
 /**
  * <ag-segmented options="Day,Week,Month" value="Week"></ag-segmented>
@@ -15,6 +15,7 @@ export class AgSegmented extends Base {
   private opts: string[] = [];
   private index = 0;
   private dragged = false;
+  private travelT = 0;
 
   get options() { return this.opts; }
   set options(v: string[]) { this.opts = v; this.renderItems(); }
@@ -83,6 +84,12 @@ export class AgSegmented extends Base {
       b.className = 'ag-segmented-item';
       b.setAttribute('role', 'tab');
       b.textContent = label;
+      // A finger starts the trip on touch-down, as iOS does; a mouse selects on click.
+      b.addEventListener('pointerdown', e => {
+        if (e.pointerType === 'mouse' || i === this.index) return;
+        this.travelAsLens();
+        this.select(i, true);
+      });
       b.addEventListener('click', () => { if (!this.dragged) this.select(i, true); });
       this.append(b);
       return b;
@@ -98,6 +105,19 @@ export class AgSegmented extends Base {
     this.pill.style.width = `${b.offsetWidth}px`;
     if (!animate) { void this.pill.offsetWidth; this.pill.style.transition = ''; }
     this.items.forEach((x, k) => { x.setAttribute('aria-selected', String(k === this.index)); x.tabIndex = k === this.index ? 0 : -1; });
+  }
+
+  /** iOS: the pill lifts into a lens for the trip to a new segment. macOS keeps it solid. */
+  private travelAsLens() {
+    const pill = this.pill!;
+    this.classList.add('ag-active');
+    delete pill.dataset.solid;
+    this.lens?.morph(true);
+    clearTimeout(this.travelT);
+    this.travelT = window.setTimeout(() => {
+      this.classList.remove('ag-active');
+      setTimeout(() => { this.lens?.morph(false); if (!this.classList.contains('ag-active')) pill.dataset.solid = ''; }, SETTLE_MS);
+    }, TRAVEL_MS);
   }
 
   private select(i: number, user: boolean) {

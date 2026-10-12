@@ -1,0 +1,23 @@
+# xcodegen generate: the iOS reference app plus a UI test target that plays the gestures.
+name: FeelRef
+options: { deploymentTarget: { iOS: "27.0" } }
+targets:
+  FeelRef:
+    type: application
+    platform: iOS
+    sources: [FeelRefiOS.swift]
+    settings:
+      INFOPLIST_FILE: Info.plist
+      PRODUCT_BUNDLE_IDENTIFIER: co.tomac.FeelRef
+      PRODUCT_NAME: FeelRef
+      CODE_SIGNING_ALLOWED: NO
+  FeelDrive:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [Drive.swift]
+    dependencies: [{ target: FeelRef }]
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      PRODUCT_BUNDLE_IDENTIFIER: co.tomac.FeelDrive
+      TEST_TARGET_NAME: FeelRef
+      CODE_SIGNING_ALLOWED: NO

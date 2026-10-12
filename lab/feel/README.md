@@ -22,3 +22,18 @@ times in a visible Chromium with the GPU compositor.
 
 The native controls are the macOS versions. Shapes differ from the iOS ones we copy (the macOS
 slider thumb is round); timing and when the lens appears are what this compares.
+
+## iOS
+
+The components copy iOS, so iOS is the main reference; macOS is the reference for mouse input.
+`ios/` holds the same scenes as a SwiftUI app plus an XCUITest target that plays the gestures
+with real simulator touches, so nobody's mouse is needed.
+
+1. `cd ios && xcodegen generate && xcodebuild build-for-testing -project FeelRef.xcodeproj
+   -scheme FeelRef -destination 'id=<booted simulator>' -derivedDataPath build`
+2. `lab/feel/run-ios.sh` records the simulator while the test runs, drives ours with touch
+   events, and writes `out/ios-<control>-<gesture>.png`. `REUSE=1` keeps the last recording.
+
+What the two references disagree on, and what the components do about it: on macOS a quick
+click never shows the lens, on iOS a quick tap does. Our controls follow the pointer: a mouse
+gets the macOS behaviour, a finger the iOS one (`lensDelay` in `src/elements/base.ts`).

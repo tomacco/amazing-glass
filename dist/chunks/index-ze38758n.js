@@ -30,6 +30,8 @@ function parseList(v) {
 var HOLD_MS = 90;
 var MORPH_MS = 220;
 var SETTLE_MS = 140;
+var TRAVEL_MS = 200;
+var lensDelay = (e) => e.pointerType === "mouse" ? HOLD_MS : 0;
 function onDrag(el, h) {
   el.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 || h.start?.(e) === false)
@@ -255,13 +257,16 @@ class AgSwitch2 extends Base {
       this.morphFor(MORPH_MS);
     };
     onDrag(this, {
-      start: () => {
+      start: (e) => {
         if (this.disabled)
           return false;
         startOn = this.checked;
         x = startOn ? travel() : 0;
         lifted = false;
-        timer = window.setTimeout(lift, HOLD_MS);
+        if (lensDelay(e) === 0)
+          lift();
+        else
+          timer = window.setTimeout(lift, lensDelay(e));
       },
       move: (dx) => {
         lift();
@@ -269,18 +274,22 @@ class AgSwitch2 extends Base {
         this.knob.style.setProperty("--x", `${x}px`);
         this.classList.toggle("ag-drag-on", x > travel() / 2);
       },
-      end: (moved) => {
+      end: (moved, e) => {
         clearTimeout(timer);
         this.knob.style.removeProperty("--x");
         this.set(moved ? x > travel() / 2 : !startOn);
         if (!lifted)
           return;
-        this.classList.remove("ag-active", "ag-drag-on");
-        this.morphFor(MORPH_MS);
+        const travelMs = !moved && e.pointerType !== "mouse" ? TRAVEL_MS : 0;
+        this.classList.remove("ag-drag-on");
         setTimeout(() => {
-          if (this.knob && !this.classList.contains("ag-active"))
-            this.knob.dataset.solid = "";
-        }, SETTLE_MS);
+          this.classList.remove("ag-active");
+          this.morphFor(MORPH_MS);
+          setTimeout(() => {
+            if (this.knob && !this.classList.contains("ag-active"))
+              this.knob.dataset.solid = "";
+          }, SETTLE_MS);
+        }, travelMs);
       }
     });
     this.addEventListener("keydown", (e) => {
@@ -380,7 +389,10 @@ class AgSlider2 extends Base {
         if (this.hasAttribute("disabled"))
           return false;
         lifted = false;
-        timer = window.setTimeout(lift, HOLD_MS);
+        if (lensDelay(e) === 0)
+          lift();
+        else
+          timer = window.setTimeout(lift, lensDelay(e));
         const onThumb = this.thumb.contains(e.target);
         v0 = onThumb ? this.value : fromX(e.clientX);
         if (!onThumb) {
@@ -434,6 +446,7 @@ class AgSegmented2 extends Base {
   opts = [];
   index = 0;
   dragged = false;
+  travelT = 0;
   get options() {
     return this.opts;
   }
@@ -532,6 +545,12 @@ class AgSegmented2 extends Base {
       b.className = "ag-segmented-item";
       b.setAttribute("role", "tab");
       b.textContent = label;
+      b.addEventListener("pointerdown", (e) => {
+        if (e.pointerType === "mouse" || i === this.index)
+          return;
+        this.travelAsLens();
+        this.select(i, true);
+      });
       b.addEventListener("click", () => {
         if (!this.dragged)
           this.select(i, true);
@@ -557,6 +576,21 @@ class AgSegmented2 extends Base {
       x.setAttribute("aria-selected", String(k === this.index));
       x.tabIndex = k === this.index ? 0 : -1;
     });
+  }
+  travelAsLens() {
+    const pill = this.pill;
+    this.classList.add("ag-active");
+    delete pill.dataset.solid;
+    this.lens?.morph(true);
+    clearTimeout(this.travelT);
+    this.travelT = window.setTimeout(() => {
+      this.classList.remove("ag-active");
+      setTimeout(() => {
+        this.lens?.morph(false);
+        if (!this.classList.contains("ag-active"))
+          pill.dataset.solid = "";
+      }, SETTLE_MS);
+    }, TRAVEL_MS);
   }
   select(i, user) {
     const from = this.index;

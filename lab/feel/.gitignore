@@ -2,3 +2,6 @@ out/
 native/SwitchRef
 native/drive
 native/*.dSYM/
+ios/build/
+ios/FeelRef.xcodeproj/
+ios/FeelRef.app/

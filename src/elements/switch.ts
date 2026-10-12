@@ -1,5 +1,5 @@
 import { Glass } from '../core';
-import { Base, define, fire, onDrag, HOLD_MS, MORPH_MS, SETTLE_MS } from './base';
+import { Base, define, fire, onDrag, lensDelay, MORPH_MS, SETTLE_MS, TRAVEL_MS } from './base';
 
 const KNOB = 38, INSET = 2;
 
@@ -39,8 +39,8 @@ export class AgSwitch extends Base {
     this.knob.dataset.solid = '';
 
     // Travel uses the resting knob width; the knob grows while touched.
-    // Like the native switch, a quick tap only slides the solid knob. The lens appears once
-    // the press outlasts HOLD_MS or the finger moves.
+    // As on macOS, a quick click only slides the solid knob and the lens waits for a hold or a
+    // drag. As on iOS, a finger gets the lens at once (see lensDelay).
     const travel = () => this.offsetWidth - KNOB - INSET * 2;
     let startOn = false, x = 0, lifted = false, timer = 0;
     const lift = () => {
@@ -52,12 +52,12 @@ export class AgSwitch extends Base {
       this.morphFor(MORPH_MS);
     };
     onDrag(this, {
-      start: () => {
+      start: e => {
         if (this.disabled) return false;
         startOn = this.checked;
         x = startOn ? travel() : 0;
         lifted = false;
-        timer = window.setTimeout(lift, HOLD_MS);
+        if (lensDelay(e) === 0) lift(); else timer = window.setTimeout(lift, lensDelay(e));
       },
       move: dx => {
         lift();
@@ -65,14 +65,19 @@ export class AgSwitch extends Base {
         this.knob!.style.setProperty('--x', `${x}px`);
         this.classList.toggle('ag-drag-on', x > travel() / 2);
       },
-      end: moved => {
+      end: (moved, e) => {
         clearTimeout(timer);
         this.knob!.style.removeProperty('--x');
         this.set(moved ? x > travel() / 2 : !startOn);
         if (!lifted) return;
-        this.classList.remove('ag-active', 'ag-drag-on');
-        this.morphFor(MORPH_MS);
-        setTimeout(() => { if (this.knob && !this.classList.contains('ag-active')) this.knob.dataset.solid = ''; }, SETTLE_MS);
+        // iOS keeps the lens while the knob travels after a tap, then lands it.
+        const travelMs = !moved && e.pointerType !== 'mouse' ? TRAVEL_MS : 0;
+        this.classList.remove('ag-drag-on');
+        setTimeout(() => {
+          this.classList.remove('ag-active');
+          this.morphFor(MORPH_MS);
+          setTimeout(() => { if (this.knob && !this.classList.contains('ag-active')) this.knob.dataset.solid = ''; }, SETTLE_MS);
+        }, travelMs);
       },
     });
     this.addEventListener('keydown', e => {

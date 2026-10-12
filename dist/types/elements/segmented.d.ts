@@ -13,6 +13,7 @@ export declare class AgSegmented extends Base {
     private opts;
     private index;
     private dragged;
+    private travelT;
     get options(): string[];
     set options(v: string[]);
     get value(): string;
@@ -23,5 +24,7 @@ export declare class AgSegmented extends Base {
     connectedCallback(): void;
     private renderItems;
     private place;
+    /** iOS: the pill lifts into a lens for the trip to a new segment. macOS keeps it solid. */
+    private travelAsLens;
     private select;
 }

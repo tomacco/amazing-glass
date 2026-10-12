@@ -12,10 +12,13 @@ export declare function parseList(v: string | null): string[];
  * stays an ordinary click on whatever was tapped.
  */
 /**
- * Press feel, measured against SwiftUI on macOS 27 (lab/feel): a 60 ms tap never shows a lens,
- * a hold shows one within about 100 ms, and the knob is solid again about 150 ms after release.
+ * Press feel, measured against SwiftUI (lab/feel). With a mouse, macOS 27: a 60 ms click never
+ * shows a lens, a hold shows one within about 100 ms. With a finger, iOS 27: the lens appears on
+ * touch-down, even for a quick tap. Either way the knob is solid again about 150 ms after release.
  */
-export declare const HOLD_MS = 90, MORPH_MS = 220, SETTLE_MS = 140;
+export declare const HOLD_MS = 90, MORPH_MS = 220, SETTLE_MS = 140, TRAVEL_MS = 200;
+/** How long a press waits before the lens: the platform the pointer belongs to decides. */
+export declare const lensDelay: (e: PointerEvent) => 0 | 90;
 export declare function onDrag(el: HTMLElement, h: {
     start?: (e: PointerEvent) => void | false;
     move?: (dx: number, e: PointerEvent) => void;

@@ -1,5 +1,5 @@
 import { Glass } from '../core';
-import { Base, clamp, define, fire, onDrag, HOLD_MS, MORPH_MS, SETTLE_MS } from './base';
+import { Base, clamp, define, fire, onDrag, lensDelay, MORPH_MS, SETTLE_MS } from './base';
 import { icon } from './icons';
 
 /**
@@ -56,7 +56,8 @@ export class AgSlider extends Base {
 
     let v0 = 0, lifted = false, timer = 0, jumpT = 0;
     const fromX = (x: number) => { const r = this.rail!.getBoundingClientRect(); return this.min + clamp((x - r.left) / r.width, 0, 1) * (this.max - this.min); };
-    // As with the switch: a tap moves the solid thumb, the lens waits for a hold or a drag.
+    // As with the switch: a click moves the solid thumb and the lens waits for a hold or a drag;
+    // a finger gets the lens at once.
     const lift = () => {
       if (lifted) return;
       lifted = true;
@@ -69,7 +70,7 @@ export class AgSlider extends Base {
       start: e => {
         if (this.hasAttribute('disabled')) return false;
         lifted = false;
-        timer = window.setTimeout(lift, HOLD_MS);
+        if (lensDelay(e) === 0) lift(); else timer = window.setTimeout(lift, lensDelay(e));
         // Grabbing the thumb keeps its offset; tapping the rail glides there.
         const onThumb = this.thumb!.contains(e.target as Node);
         v0 = onThumb ? this.value : fromX(e.clientX);
