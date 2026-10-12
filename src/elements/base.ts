@@ -49,15 +49,20 @@ export function onDrag(el: HTMLElement, h: {
       if (!moved && Math.abs(ev.clientX - x0) > 3) { moved = true; el.setPointerCapture(e.pointerId); }
       h.move?.(ev.clientX - x0, ev);
     };
+    // Listen on the window: until the pointer has moved 3 px sideways it is not captured, so a
+    // press that drifts off the control and is released elsewhere must still end here.
+    const mine = (ev: PointerEvent) => ev.pointerId === e.pointerId;
+    const onMove = (ev: PointerEvent) => { if (mine(ev)) move(ev); };
     const up = (ev: PointerEvent) => {
-      el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerup', up);
-      el.removeEventListener('pointercancel', up);
+      if (!mine(ev)) return;
+      removeEventListener('pointermove', onMove);
+      removeEventListener('pointerup', up);
+      removeEventListener('pointercancel', up);
       h.end?.(moved, ev);
     };
-    el.addEventListener('pointermove', move);
-    el.addEventListener('pointerup', up);
-    el.addEventListener('pointercancel', up);
+    addEventListener('pointermove', onMove);
+    addEventListener('pointerup', up);
+    addEventListener('pointercancel', up);
   });
 }
 

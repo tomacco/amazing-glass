@@ -17,7 +17,7 @@ Both sides paint a black square in the top left corner on mouse down; the sheets
 Our frames come from Playwright screenshots at about 20 per second, so our side can look up to
 one tile late.
 
-`cost.ts` reads Chromium's own main-thread counters for one press, `frames.ts` measures frame
+`stuck.ts` presses every switch and slider on the demo page, drifts off and releases elsewhere, and exits nonzero if any control keeps its lens. `cost.ts` reads Chromium's own main-thread counters for one press, `frames.ts` measures frame
 times in a visible Chromium with the GPU compositor.
 
 The native controls are the macOS versions. Shapes differ from the iOS ones we copy (the macOS

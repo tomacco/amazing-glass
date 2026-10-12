@@ -45,15 +45,22 @@ function onDrag(el, h) {
       }
       h.move?.(ev.clientX - x0, ev);
     };
+    const mine = (ev) => ev.pointerId === e.pointerId;
+    const onMove = (ev) => {
+      if (mine(ev))
+        move(ev);
+    };
     const up = (ev) => {
-      el.removeEventListener("pointermove", move);
-      el.removeEventListener("pointerup", up);
-      el.removeEventListener("pointercancel", up);
+      if (!mine(ev))
+        return;
+      removeEventListener("pointermove", onMove);
+      removeEventListener("pointerup", up);
+      removeEventListener("pointercancel", up);
       h.end?.(moved, ev);
     };
-    el.addEventListener("pointermove", move);
-    el.addEventListener("pointerup", up);
-    el.addEventListener("pointercancel", up);
+    addEventListener("pointermove", onMove);
+    addEventListener("pointerup", up);
+    addEventListener("pointercancel", up);
   });
 }
 var GLASS_ATTRS = ["variant", "tint", "tone", "params"];
