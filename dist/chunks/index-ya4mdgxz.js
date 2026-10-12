@@ -509,6 +509,14 @@ function personalize2(look, root = document.documentElement) {
 
 // src/core/glass.ts
 var uid = 0;
+var darkQuery = typeof matchMedia === "undefined" ? null : matchMedia("(prefers-color-scheme: dark)");
+darkQuery?.addEventListener("change", () => refresh2());
+function schemeTone(el) {
+  const theme = el.closest("[data-theme]")?.dataset.theme;
+  if (theme === "light" || theme === "dark")
+    return theme;
+  return darkQuery?.matches ? "dark" : "light";
+}
 
 class Glass2 {
   el;
@@ -566,7 +574,7 @@ class Glass2 {
   }
   setTone(tone) {
     this.tone = tone;
-    if (tone === "auto")
+    if (tone === "auto" || tone === "content")
       this.onRefresh();
     else
       this.el.dataset.tone = tone;
@@ -615,8 +623,8 @@ class Glass2 {
   onRefresh() {
     if (!this.el.isConnected)
       return;
-    if (this.tone === "auto") {
-      const t = measureTone(this.el);
+    if (this.tone === "auto" || this.tone === "content") {
+      const t = this.tone === "auto" ? schemeTone(this.el) : measureTone(this.el);
       if (t && this.el.dataset.tone !== t)
         this.el.dataset.tone = t;
     }

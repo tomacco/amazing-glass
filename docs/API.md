@@ -68,7 +68,7 @@ A glass surface for your own content. Children are left alone; the element adds 
 |---|---|---|---|
 | `variant` | "regular" \| "clear" \| "lens" | `"regular"` | Material preset. Regular frosts for legibility; clear shows more of the content; lens is the magnifying knob glass. |
 | `tint` | CSS colour |  | Stained glass: the colour lives in the material. |
-| `tone` | "auto" \| "light" \| "dark" | `"auto"` | Ink colour. Auto samples the brightness behind the glass. |
+| `tone` | "auto" \| "light" \| "dark" \| "content" | `"auto"` | Light or dark glass. Auto follows the appearance (the nearest data-theme, else the system setting), as Apple's glass does. Content samples the brightness behind the glass and can switch while it moves. |
 | `params` | JSON of GlassParams |  | Fine-tune any material value, for example {"blur":6,"dispersion":0.2}. |
 | `dim` | boolean |  | Adds the 35% dark dimming layer the HIG asks for over bright media (clear only). |
 
@@ -397,7 +397,7 @@ Actions that affect the same thing share one capsule; groups float apart.
 | `spread (toolbar)` | boolean |  | Push groups to the ends. |
 | `variant (group)` | "regular" \| "clear" \| "lens" | `"regular"` | Material preset. Regular frosts for legibility; clear shows more of the content; lens is the magnifying knob glass. |
 | `tint (group)` | CSS colour |  | Stained glass: the colour lives in the material. |
-| `tone (group)` | "auto" \| "light" \| "dark" | `"auto"` | Ink colour. Auto samples the brightness behind the glass. |
+| `tone (group)` | "auto" \| "light" \| "dark" \| "content" | `"auto"` | Light or dark glass. Auto follows the appearance (the nearest data-theme, else the system setting), as Apple's glass does. Content samples the brightness behind the glass and can switch while it moves. |
 | `params (group)` | JSON of GlassParams |  | Fine-tune any material value, for example {"blur":6,"dispersion":0.2}. |
 | `dim (group)` | boolean |  | Dimming layer for clear groups over media. |
 

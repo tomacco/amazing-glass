@@ -71,7 +71,7 @@ export const GLASS_ATTRS = ['variant', 'tint', 'tone', 'params'];
 /**
  * Applies the shared glass attributes to a Glass instance:
  *   variant="regular|clear|lens"   tint="#0088ff" (stained glass)
- *   tone="auto|light|dark"         params='{"blur":6}' (any GlassParams)
+ *   tone="auto|light|dark|content" params='{"blur":6}' (any GlassParams)
  */
 export function applyGlassAttrs(host: HTMLElement, glass: Glass | undefined, target: HTMLElement = host) {
   if (!glass) return;

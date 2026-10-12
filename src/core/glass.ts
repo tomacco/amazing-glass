@@ -1,21 +1,30 @@
 import { resolveParams, type GlassParams, type GlassVariant } from './params';
 import { roundedRectMaps, type GlassMaps } from './maps';
 import { createFilter, cssBackdrop, supportsRefraction, updateFilter } from './filter';
-import { measureTone, onRefresh } from './backdrop';
+import { measureTone, onRefresh, refresh } from './backdrop';
 import { CpuRefraction } from './fallback';
 import { lookFor, onLookChange } from './looks';
 
-export type GlassTone = 'auto' | 'light' | 'dark';
+export type GlassTone = 'auto' | 'light' | 'dark' | 'content';
 
 export interface GlassOptions {
   variant?: GlassVariant;
   /** Override any preset value. */
   params?: Partial<GlassParams>;
-  /** Ink colour strategy. `auto` samples what is behind the glass. Default: auto, except lens. */
+  /** Light or dark glass. `auto` follows the appearance (nearest data-theme, else the system), `content` samples what is behind. Default: auto, except lens. */
   tone?: GlassTone;
 }
 
 let uid = 0;
+
+/** The appearance in force for an element: the nearest data-theme, else the system setting. */
+const darkQuery = typeof matchMedia === 'undefined' ? null : matchMedia('(prefers-color-scheme: dark)');
+darkQuery?.addEventListener('change', () => refresh());
+function schemeTone(el: HTMLElement): 'light' | 'dark' {
+  const theme = el.closest<HTMLElement>('[data-theme]')?.dataset.theme;
+  if (theme === 'light' || theme === 'dark') return theme;
+  return darkQuery?.matches ? 'dark' : 'light';
+}
 
 /**
  * Turns any element into Liquid Glass. The element keeps its children; the engine adds one
@@ -86,7 +95,7 @@ export class Glass {
 
   setTone(tone: GlassTone) {
     this.tone = tone;
-    if (tone === 'auto') this.onRefresh(); else this.el.dataset.tone = tone;
+    if (tone === 'auto' || tone === 'content') this.onRefresh(); else this.el.dataset.tone = tone;
   }
 
   /**
@@ -134,8 +143,11 @@ export class Glass {
 
   private onRefresh() {
     if (!this.el.isConnected) return;
-    if (this.tone === 'auto') {
-      const t = measureTone(this.el);
+    // auto follows the appearance, as SwiftUI's .glassEffect does on macOS 27 and iOS 27: light
+    // glass over everything in light mode, even black, and dark glass in dark mode, even over
+    // white (lab/feel). content samples the backdrop instead, which can flip while moving.
+    if (this.tone === 'auto' || this.tone === 'content') {
+      const t = this.tone === 'auto' ? schemeTone(this.el) : measureTone(this.el);
       if (t && this.el.dataset.tone !== t) this.el.dataset.tone = t;
     }
     if (this.cpu && this.maps) this.cpu.render(this.maps.raw, this.el.offsetWidth, this.el.offsetHeight, this.resolve().dispersion);

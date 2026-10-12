@@ -16,7 +16,7 @@ export interface ComponentDoc {
 const glassAttrs: Row[] = [
   { name: 'variant', type: '"regular" | "clear" | "lens"', default: '"regular"', description: 'Material preset. Regular frosts for legibility; clear shows more of the content; lens is the magnifying knob glass.' },
   { name: 'tint', type: 'CSS colour', description: 'Stained glass: the colour lives in the material.' },
-  { name: 'tone', type: '"auto" | "light" | "dark"', default: '"auto"', description: 'Ink colour. Auto samples the brightness behind the glass.' },
+  { name: 'tone', type: '"auto" | "light" | "dark" | "content"', default: '"auto"', description: 'Light or dark glass. Auto follows the appearance (the nearest data-theme, else the system setting), as Apple\'s glass does. Content samples the brightness behind the glass and can switch while it moves.' },
   { name: 'params', type: 'JSON of GlassParams', description: 'Fine-tune any material value, for example {"blur":6,"dispersion":0.2}.' },
 ];
 

@@ -1,10 +1,10 @@
 import { type GlassParams, type GlassVariant } from './params';
-export type GlassTone = 'auto' | 'light' | 'dark';
+export type GlassTone = 'auto' | 'light' | 'dark' | 'content';
 export interface GlassOptions {
     variant?: GlassVariant;
     /** Override any preset value. */
     params?: Partial<GlassParams>;
-    /** Ink colour strategy. `auto` samples what is behind the glass. Default: auto, except lens. */
+    /** Light or dark glass. `auto` follows the appearance (nearest data-theme, else the system), `content` samples what is behind. Default: auto, except lens. */
     tone?: GlassTone;
 }
 /**

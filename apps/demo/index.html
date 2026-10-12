@@ -105,7 +105,7 @@
         <figcaption>Cross-section of the rim. Rays enter the curved edge and land further in. Thicker glass, bigger bend.</figcaption>
       </figure>
       <div class="playground">
-        <div class="play-stage"><canvas class="scene-canvas" data-scene="chart" aria-hidden="true"></canvas><div class="play-glass" id="play-glass"><span class="play-hint">drag me</span></div></div>
+        <div class="play-stage" data-theme="light"><canvas class="scene-canvas" data-scene="chart" aria-hidden="true"></canvas><div class="play-glass" id="play-glass"><span class="play-hint">drag me</span></div></div>
         <div class="play-controls">
           <ag-segmented id="play-variant" options="Lens,Clear,Regular" value="Lens"></ag-segmented>
           <label><span>Thickness</span><ag-slider id="p-depth" min="0" max="2.4" step="0.01" value="1.2"></ag-slider></label>
@@ -187,7 +187,7 @@
         <p>Scroll the feed and the tab bar shrinks to get out of the way. Drag across it and the selection follows as a lens. Tap an album and a sheet floats up, inset so the content peeks around it. Pull it up and it goes flush and more opaque.</p>
         <p class="fine">Corners are concentric. The sheet sits 8 px inside a 55 px device corner, so its corner is 47 px.</p>
       </div>
-      <div class="phone reveal-y" id="phone">
+      <div class="phone reveal-y" id="phone" data-theme="light">
         <div class="phone-status"><span>9:41</span><span class="dots">●●●</span></div>
         <div class="phone-scroll" id="feed">
           <div class="phone-content">
@@ -247,7 +247,7 @@
           <div class="row"><ag-switch checked></ag-switch><ag-button variant="prominent" size="small" data-try="lux-nova">Try on the page</ag-button></div>
         </ag-glass>
       </figure>
-      <figure class="look-tile" data-ag-look="bauhaus">
+      <figure class="look-tile" data-ag-look="bauhaus" data-theme="light">
         <canvas class="look-bg" data-scene="planes" aria-hidden="true"></canvas>
         <ag-glass class="look-card" variant="regular">
           <b>Bauhaus</b>

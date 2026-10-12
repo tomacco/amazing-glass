@@ -61,6 +61,20 @@ struct WatchView: UIViewRepresentable {
     func updateUIView(_ v: Watch, context: Context) {}
 }
 
+/// Tone sweep: regular glass over greys from black to white, to see whether iOS picks the
+/// glass tint from the content or from the appearance.
+struct Sweep: View {
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(0..<17, id: \.self) { i in
+                let g = Double(i) / 16
+                ZStack { Color(red: g, green: g, blue: g); Color.clear.frame(width: 120, height: 32).glassEffect(.regular, in: .capsule) }
+                    .frame(maxWidth: .infinity).frame(height: 48)
+            }
+        }
+    }
+}
+
 struct Stage: View {
     @State var pressed = false
     var body: some View {
@@ -77,5 +91,5 @@ struct Stage: View {
 
 @main
 struct FeelRefiOSApp: App {
-    var body: some Scene { WindowGroup { Stage() } }
+    var body: some Scene { WindowGroup { if scene == "sweep" { Sweep().ignoresSafeArea() } else { Stage() } } }
 }

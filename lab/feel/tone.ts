@@ -6,7 +6,7 @@ import { chromium } from 'playwright-core';
 const port = process.argv[2] ?? '5182';
 const b = await chromium.launch({ headless: true });
 const p = await b.newPage({ viewport: { width: 1280, height: 900 } });
-await p.goto(`http://localhost:${port}/site/`); await p.waitForTimeout(1200);
+await p.goto(process.env.BASE ?? `http://localhost:${port}/site/`); await p.waitForTimeout(1200);
 await p.locator('#physics').scrollIntoViewIfNeeded(); await p.waitForTimeout(800);
 let dark = 0;
 for (const variant of ['Lens', 'Clear', 'Regular']) {
@@ -19,6 +19,12 @@ for (const variant of ['Lens', 'Clear', 'Regular']) {
   const steps = [...Array(Math.round(stage.height + 40)).keys()].map(i => stage.y + i);
   for (const ty of [...steps, ...steps.reverse()]) {
     await p.mouse.move(x, ty); await p.waitForTimeout(20);
+    const t = await p.evaluate(() => (document.querySelector('#play-glass') as HTMLElement).dataset.tone ?? '?');
+    path.push(t[0]); if (t === 'dark') dark++;
+  }
+  // Then the corners and edges, where the glass hangs partly outside the clipped picture.
+  for (const [fx, fy] of [[1, 0], [1, 1], [0, 1], [0, 0], [1, 0.5], [0.5, 0]]) {
+    await p.mouse.move(stage.x + stage.width * fx, stage.y + stage.height * fy, { steps: 30 }); await p.waitForTimeout(150);
     const t = await p.evaluate(() => (document.querySelector('#play-glass') as HTMLElement).dataset.tone ?? '?');
     path.push(t[0]); if (t === 'dark') dark++;
   }
