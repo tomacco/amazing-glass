@@ -97,14 +97,18 @@ function visibleRect(el: HTMLElement) {
 export function measureTone(el: HTMLElement): 'light' | 'dark' | null {
   const r = visibleRect(el);
   if (r.width < 1 || r.height < 1) return null;
+  // Five columns on three rows. One row through the middle can rest on a thin dark line of
+  // the content (a rule, a grid line) and read the whole backdrop as dark.
   let sum = 0, n = 0;
-  for (let i = 0; i < 5; i++) {
-    const l = luminanceAt(r.left + (r.width * (i + 0.5)) / 5, r.top + r.height / 2, el);
+  for (const fy of [0.25, 0.5, 0.75]) for (let i = 0; i < 5; i++) {
+    const l = luminanceAt(r.left + (r.width * (i + 0.5)) / 5, r.top + r.height * fy, el);
     if (l != null) { sum += l; n++; }
   }
   if (!n) return null;
   const lum = sum / n, cur = el.dataset.tone || 'light';
-  return cur === 'light' ? (lum < 0.47 ? 'dark' : 'light') : (lum > 0.57 ? 'light' : 'dark');
+  // A wide gap between the two cut-offs: a backdrop near the middle keeps the tone it has
+  // instead of flickering while the glass moves over it.
+  return cur === 'light' ? (lum < 0.4 ? 'dark' : 'light') : (lum > 0.58 ? 'light' : 'dark');
 }
 
 /**

@@ -1,6 +1,7 @@
 // bun lab/feel/tone.ts [port]: drags the playground lens from top to bottom and back, in each
 // variant, and logs the glass tone it picks on the way. The picture behind is light, so the
-// tone must stay light. Exits nonzero if any step reads dark.
+// tone must stay light. Moves in 1 px steps, slow enough to rest the lens's middle on a thin
+// dark line of the picture. Exits nonzero if any step reads dark.
 import { chromium } from 'playwright-core';
 const port = process.argv[2] ?? '5182';
 const b = await chromium.launch({ headless: true });
@@ -15,14 +16,14 @@ for (const variant of ['Lens', 'Clear', 'Regular']) {
   let x = g.x + g.width / 2, y = g.y + g.height / 2;
   await p.mouse.move(x, y); await p.mouse.down();
   const path: string[] = [];
-  const steps = [...Array(24).keys()].map(i => stage.y + (stage.height + 40) * (i / 23));
+  const steps = [...Array(Math.round(stage.height + 40)).keys()].map(i => stage.y + i);
   for (const ty of [...steps, ...steps.reverse()]) {
-    await p.mouse.move(x, ty); await p.waitForTimeout(40);
+    await p.mouse.move(x, ty); await p.waitForTimeout(20);
     const t = await p.evaluate(() => (document.querySelector('#play-glass') as HTMLElement).dataset.tone ?? '?');
     path.push(t[0]); if (t === 'dark') dark++;
   }
   await p.mouse.up();
-  console.log(`${variant.padEnd(8)} ${path.join('')}`);
+  console.log(`${variant.padEnd(8)} ${path.filter((_, i) => i % 8 === 0).join('')}  (${path.filter(c => c === 'd').length} dark of ${path.length})`);
 }
 await b.close();
 console.log(dark ? `${dark} dark readings over a light picture` : 'tone stayed light');

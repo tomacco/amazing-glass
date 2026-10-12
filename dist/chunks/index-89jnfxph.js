@@ -327,17 +327,18 @@ function measureTone(el) {
   if (r.width < 1 || r.height < 1)
     return null;
   let sum = 0, n = 0;
-  for (let i = 0;i < 5; i++) {
-    const l = luminanceAt2(r.left + r.width * (i + 0.5) / 5, r.top + r.height / 2, el);
-    if (l != null) {
-      sum += l;
-      n++;
+  for (const fy of [0.25, 0.5, 0.75])
+    for (let i = 0;i < 5; i++) {
+      const l = luminanceAt2(r.left + r.width * (i + 0.5) / 5, r.top + r.height * fy, el);
+      if (l != null) {
+        sum += l;
+        n++;
+      }
     }
-  }
   if (!n)
     return null;
   const lum = sum / n, cur = el.dataset.tone || "light";
-  return cur === "light" ? lum < 0.47 ? "dark" : "light" : lum > 0.57 ? "light" : "dark";
+  return cur === "light" ? lum < 0.4 ? "dark" : "light" : lum > 0.58 ? "light" : "dark";
 }
 function canvasBehind(el) {
   if (el.parentElement?.closest(".ag-glass"))
